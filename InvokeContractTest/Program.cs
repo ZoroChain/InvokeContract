@@ -48,6 +48,7 @@ namespace InvokeContractTest
             RegExample(new BalanceOfNEP5());
             RegExample(new TransferNEP5());
             RegExample(new ManyThread());
+            RegExample(new CreateAppChain());
         }
 
         static void ShowMenu()
@@ -57,7 +58,6 @@ namespace InvokeContractTest
             {
                 Console.WriteLine("type '" + item.Key + "' to Run: " + item.Value.Name);               
             }
-            Console.WriteLine("params write for example: ChainHash,WIF,targetWIF,ContractPath,ContractHash");
             Console.WriteLine("type '?' to Get this list.");
         }
 
@@ -75,20 +75,11 @@ namespace InvokeContractTest
                     continue;
                 }
                 else if (allExample.ContainsKey(line))
-                {
-                    Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractPath,ContractHash");
-                    var param = Console.ReadLine();
-                    var example = allExample[line];
-                    string[] messages = param.Split(",");
+                {                    
+                    var example = allExample[line];                    
                     try
                     {
-                        Console.WriteLine("[begin]" + example.Name);
-                        Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, ContractHash:{4}", messages[0], messages[1], messages[2], messages[3], messages[4]);
-                        example.ChainHash = messages[0];
-                        example.WIF = messages[1];
-                        example.targetWIF = messages[2];
-                        example.ContractPath = messages[3];
-                        example.ContractHash = messages[4];
+                        Console.WriteLine("[begin]" + example.Name);                        
                         await example.StartAsync();
 
                         Console.WriteLine("[end]" + example.Name);

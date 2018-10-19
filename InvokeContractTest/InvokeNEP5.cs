@@ -8,7 +8,7 @@ namespace InvokeContractTest
 {
     class InvokeNEP5 : IExample
     {
-        public string Name => "invoke";
+        public string Name => "invoke 预调用合约方法";
 
         public string ID => "4";
 
@@ -25,6 +25,14 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
+            Console.WriteLine("Params:ChainHash,WIF,ContractHash");
+            var param = Console.ReadLine();
+            string[] messages = param.Split(",");
+            Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
+            ChainHash = messages[0];
+            WIF = messages[1];
+            ContractHash = messages[2];
+
             ScriptBuilder sb = new ScriptBuilder();
             MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
             sb.EmitParamJson(array);

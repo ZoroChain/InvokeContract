@@ -12,27 +12,7 @@ namespace InvokeContractTest
         }
         string ID {
             get;
-        }
-        string ChainHash {
-            get;
-            set;
-        }
-        string WIF {
-            set;
-            get;
-        }
-        string targetWIF {
-            set;
-            get;
-        }
-        string ContractPath {
-            set;
-            get;
-        }
-        string ContractHash {
-            set;
-            get;
-        }
+        }        
         Task StartAsync();
     }
 }

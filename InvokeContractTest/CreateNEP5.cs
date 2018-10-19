@@ -9,23 +9,27 @@ namespace InvokeContractTest
 {
     class CreateNEP5 : IExample
     {
-        public string Name => "create";
+        public string Name => "create 发布一个合约";
 
         public string ID => "0";
 
         private string chainHash;
         private string wif;
-        private string targetwif;
         private string contractPath;
-        private string contractHash;
         public string ChainHash { get => chainHash; set => chainHash = value; }
         public string WIF { get => wif; set => wif = value; }
-        public string targetWIF { get => targetwif; set => targetwif = value; }
         public string ContractPath { get => contractPath; set => contractPath = value; }
-        public string ContractHash { get => contractHash; set => contractHash = value; }
 
         public async Task StartAsync()
-        {            
+        {
+            Console.WriteLine("Params:ChainHash,WIF,ContractPath");
+            var param = Console.ReadLine();
+            string[] messages = param.Split(",");
+            Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
+            ChainHash = messages[0];
+            WIF = messages[1];
+            ContractPath = messages[2];
+
             byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
             string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);

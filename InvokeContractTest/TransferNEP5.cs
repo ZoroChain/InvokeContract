@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,23 +11,32 @@ namespace InvokeContractTest
 {
     class TransferNEP5 : IExample
     {
-        public string Name => "transfer";
+        public string Name => "transfer 进行一次nep5合约交易";
 
         public string ID => "2";
 
         private string chainHash;
         private string wif;
         private string targetwif;
-        private string contractPath;
         private string contractHash;
         public string ChainHash { get => chainHash; set => chainHash = value; }
         public string WIF { get => wif; set => wif = value; }
         public string targetWIF { get => targetwif; set => targetwif = value; }
-        public string ContractPath { get => contractPath; set => contractPath = value; }
         public string ContractHash { get => contractHash; set => contractHash = value; }
+        public string transferValue;
 
         public async Task StartAsync()
         {
+            Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractHash,transferValue");
+            var param = Console.ReadLine();
+            string[] messages = param.Split(",");
+            Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, transferValue:{4}", messages[0], messages[1], messages[2], messages[3], messages[4]);
+            ChainHash = messages[0];
+            WIF = messages[1];
+            targetWIF = messages[2];
+            ContractHash = messages[3];
+            transferValue = messages[4];
+
             byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
             string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
@@ -36,17 +47,22 @@ namespace InvokeContractTest
             string targetAddress = ThinNeo.Helper.GetAddressFromPublicKey(targetpubkey);
             var targetscripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetAddress);
 
-            var i = 10000000000;
-            ThreadPool.QueueUserWorkItem(async (p) => {
-                while (true)
-                {
-                    i++;
+            //ThreadPool.QueueUserWorkItem(async (p) => {
+            //    while (true)
+            //    {
                     using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
                     {
                         MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
+                        byte[] randomBytes = new byte[32];
+                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) {
+                            rng.GetBytes(randomBytes);
+                        }
+                        BigInteger randomNum = new BigInteger(randomBytes);
+                        sb.EmitPushNumber(randomNum);
+                        sb.Emit(ThinNeo.VM.OpCode.DROP);
                         array.AddArrayValue("(addr)" + address);//from
                         array.AddArrayValue("(addr)" + targetAddress);//to
-                        array.AddArrayValue("(int)" + i);//value
+                        array.AddArrayValue("(int)" + transferValue);//value
                         sb.EmitParamJson(array);
                         sb.EmitPushString("transfer");
                         sb.EmitAppCall(new Hash160(ContractHash));
@@ -88,10 +104,10 @@ namespace InvokeContractTest
                         byte[] postdata;
                         var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
                         var result = await Helper.HttpPost(url, postdata);
-                        Console.WriteLine(address + " " + targetAddress + "  " + i);
+                        Console.WriteLine(address + " " + targetAddress + "  " + transferValue);
                     }
-                }
-            });
+            //    }
+            //});
         }
     }
 }
