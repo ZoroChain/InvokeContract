@@ -30,6 +30,10 @@ namespace InvokeContractTest
             WIF = messages[1];
             ContractPath = messages[2];
 
+            await CreateNep5Async(ChainHash, WIF, ContractPath);
+        }
+
+        public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath) {
             byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
             string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);

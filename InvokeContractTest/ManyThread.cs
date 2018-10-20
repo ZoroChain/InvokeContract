@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using ThinNeo;
@@ -38,6 +40,14 @@ namespace InvokeContractTest
                     using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
                     {
                         MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
+                        byte[] randomBytes = new byte[32];
+                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                        {
+                            rng.GetBytes(randomBytes);
+                        }
+                        BigInteger randomNum = new BigInteger(randomBytes);
+                        sb.EmitPushNumber(randomNum);
+                        sb.Emit(ThinNeo.VM.OpCode.DROP);
                         array.AddArrayValue("(addr)" + address);//from
                         array.AddArrayValue("(addr)" + targetAddress);//to
                         array.AddArrayValue("(int)" + transferValue);//value

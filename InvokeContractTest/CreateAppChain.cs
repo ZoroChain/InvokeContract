@@ -38,18 +38,18 @@ namespace InvokeContractTest
             WIF = messages[1];
             name = messages[2];
 
-            Console.WriteLine("validators Length: ");
+            Console.Write("validators Length: ");
             string vlength = Console.ReadLine();
             validators = new string[int.Parse(vlength)];
             for (int i = 0; i < validators.Length; i++) {
-                Console.WriteLine("validator " + (i + 1) + ": ");
+                Console.Write("validator " + (i + 1) + ": ");
                 validators[i] = Console.ReadLine();
             }
-            Console.WriteLine("seedList Length: ");
+            Console.Write("seedList Length: ");
             string slength = Console.ReadLine();
             seedList = new string[int.Parse(slength)];
             for (int i = 0; i < seedList.Length; i++) {
-                Console.WriteLine("seed " + (i + 1) + ": ");
+                Console.Write("seed " + (i + 1) + ": ");
                 seedList[i] = Console.ReadLine();
             }
 

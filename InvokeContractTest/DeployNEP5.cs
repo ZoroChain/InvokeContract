@@ -29,6 +29,10 @@ namespace InvokeContractTest
             WIF = messages[1];
             ContractHash = messages[2];
 
+            await DeployNEP5Async(ChainHash, WIF, ContractHash);
+        }
+
+        public async Task DeployNEP5Async(string ChainHash, string WIF, string ContractHash) {
             byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
             string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);

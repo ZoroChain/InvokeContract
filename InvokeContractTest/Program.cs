@@ -35,7 +35,7 @@ namespace InvokeContractTest
             }
         }
 
-        static Dictionary<string, IExample> allExample = new System.Collections.Generic.Dictionary<string, IExample>();
+        public static Dictionary<string, IExample> allExample = new System.Collections.Generic.Dictionary<string, IExample>();
         static void RegExample(IExample example)
         {
             allExample[example.ID.ToLower()] = example;
@@ -49,6 +49,7 @@ namespace InvokeContractTest
             RegExample(new TransferNEP5());
             RegExample(new ManyThread());
             RegExample(new CreateAppChain());
+            RegExample(new Deployment());
         }
 
         static void ShowMenu()
