@@ -22,13 +22,16 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            Console.WriteLine("Params:ChainHash,WIF,ContractPath");
-            var param = Console.ReadLine();
-            string[] messages = param.Split(",");
-            Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
-            ChainHash = messages[0];
-            WIF = messages[1];
-            ContractPath = messages[2];
+            //Console.WriteLine("Params:ChainHash,WIF,ContractPath");
+            //var param = Console.ReadLine();
+            //string[] messages = param.Split(",");
+            //Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
+            //ChainHash = messages[0];
+            //WIF = messages[1];
+            //ContractPath = messages[2];
+            ChainHash = Config.getValue("ChainHash");
+            WIF = Config.getValue("WIF");
+            ContractPath = Config.getValue("ContractPath");
 
             await CreateNep5Async(ChainHash, WIF, ContractPath);
         }

@@ -94,15 +94,21 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractHash,transferValue");
-            var param = Console.ReadLine();
-            string[] messages = param.Split(",");
-            Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, transferValue:{4}", messages[0], messages[1], messages[2], messages[3], messages[4]);
-            ChainHash = messages[0];
-            WIF = messages[1];
-            targetWIF = messages[2];
-            ContractHash = messages[3];
-            transferValue = messages[4];
+            //Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractHash,transferValue");
+            //var param = Console.ReadLine();
+            //string[] messages = param.Split(",");
+            //Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, transferValue:{4}", messages[0], messages[1], messages[2], messages[3], messages[4]);
+            //ChainHash = messages[0];
+            //WIF = messages[1];
+            //targetWIF = messages[2];
+            //ContractHash = messages[3];
+            //transferValue = messages[4];
+
+            ChainHash = Config.getValue("ChainHash");
+            WIF = Config.getValue("WIF");
+            targetWIF = Config.getValue("targetWIF");
+            ContractHash = Config.getValue("ContractHash");
+            transferValue = Config.getValue("transferValue");
 
             prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);

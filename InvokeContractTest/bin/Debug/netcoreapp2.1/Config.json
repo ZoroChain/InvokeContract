@@ -1,0 +1,8 @@
+{
+  "ChainHash": "0",
+  "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
+  "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
+  "ContractPath": "BcpContract.avm",
+  "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
+  "transferValue": "10000"
+}

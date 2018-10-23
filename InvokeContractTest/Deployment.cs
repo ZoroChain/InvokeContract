@@ -24,16 +24,23 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractPath,ContractHash,transferValue");
-            var param = Console.ReadLine();
-            string[] messages = param.Split(",");
-            Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, ContractHash:{4}, transferValue:{5}", messages[0], messages[1], messages[2], messages[3], messages[4], messages[5]);
-            ChainHash = messages[0] == ""?Fixed8.Zero.ToString(): messages[0];
-            WIF = messages[1] == "" ? "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3" : messages[1];
-            targetWIF = messages[2] == "" ? "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ" : messages[2];
-            ContractPath = messages[3] == "" ? "BcpContract.avm" : messages[3];
-            ContractHash = messages[4] == "" ? "c4108917282bff79b156d4d01315df811790c0e8" : messages[4];
-            transferValue = messages[5] == "" ? "10000000000" : messages[5];
+            //Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractPath,ContractHash,transferValue");
+            //var param = Console.ReadLine();
+            //string[] messages = param.Split(",");
+            //Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, ContractHash:{4}, transferValue:{5}", messages[0], messages[1], messages[2], messages[3], messages[4], messages[5]);
+            //ChainHash = messages[0] == ""?Fixed8.Zero.ToString(): messages[0];
+            //WIF = messages[1] == "" ? "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3" : messages[1];
+            //targetWIF = messages[2] == "" ? "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ" : messages[2];
+            //ContractPath = messages[3] == "" ? "BcpContract.avm" : messages[3];
+            //ContractHash = messages[4] == "" ? "c4108917282bff79b156d4d01315df811790c0e8" : messages[4];
+            //transferValue = messages[5] == "" ? "10000000000" : messages[5];
+
+            ChainHash = Config.getValue("ChainHash");
+            WIF = Config.getValue("WIF");
+            targetWIF = Config.getValue("targetWIF");
+            ContractPath = Config.getValue("ContractPath");
+            ContractHash = Config.getValue("ContractHash");
+            transferValue = Config.getValue("transferValue");
 
             var createNep5 = Program.allExample["0"] as CreateNEP5;
             await createNep5.CreateNep5Async(ChainHash, WIF, ContractPath);

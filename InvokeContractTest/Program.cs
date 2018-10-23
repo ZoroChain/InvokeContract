@@ -25,6 +25,8 @@ namespace InvokeContractTest
 
         static void Main(string[] args)
         {
+            Config.init("Config.json");
+
             InitExample();
             ShowMenu();
 
