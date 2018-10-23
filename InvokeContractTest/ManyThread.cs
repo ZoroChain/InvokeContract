@@ -32,62 +32,59 @@ namespace InvokeContractTest
         public string transferValue;
 
         public void ThreadMethodAsync()
-        {            
+        {
+            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
+            array.AddArrayValue("(addr)" + address);//from
+            array.AddArrayValue("(addr)" + targetAddress);//to
+            array.AddArrayValue("(int)" + transferValue);//value
             while (true)
             {
-                lock (typeof(ManyThread))
+                using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
                 {
-                    using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
+                    byte[] randomBytes = new byte[32];
+                    using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
                     {
-                        MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-                        byte[] randomBytes = new byte[32];
-                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                        {
-                            rng.GetBytes(randomBytes);
-                        }
-                        BigInteger randomNum = new BigInteger(randomBytes);
-                        sb.EmitPushNumber(randomNum);
-                        sb.Emit(ThinNeo.VM.OpCode.DROP);
-                        array.AddArrayValue("(addr)" + address);//from
-                        array.AddArrayValue("(addr)" + targetAddress);//to
-                        array.AddArrayValue("(int)" + transferValue);//value
-                        sb.EmitParamJson(array);
-                        sb.EmitPushString("transfer");
-                        sb.EmitAppCall(new Hash160(ContractHash));
-
-                        ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
-                        extdata.script = sb.ToArray();
-
-                        //extdata.gas = Math.Ceiling(gas_consumed - 10);
-                        extdata.gas = 0;
-
-                        ThinNeo.Transaction tran = Helper.makeTran(null, null, null, extdata.gas);
-                        tran.version = 1;
-                        tran.extdata = extdata;
-                        tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
-                        //附加鉴证
-                        tran.attributes = new ThinNeo.Attribute[1];
-                        tran.attributes[0] = new ThinNeo.Attribute();
-                        tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-                        tran.attributes[0].data = scripthash;
-
-                        byte[] msg = tran.GetMessage();
-                        byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
-                        tran.AddWitness(signdata, pubkey, address);
-                        string txid = tran.GetHash().ToString();
-                        byte[] data = tran.GetRawData();
-                        string rawdata = ThinNeo.Helper.Bytes2HexString(data);
-
-                        MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                        postRawArray.AddArrayValue(ChainHash);
-                        postRawArray.AddArrayValue(rawdata);
-
-                        byte[] postdata;
-                        var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                        var result = Helper.HttpPost(url, postdata);
-                        Console.WriteLine(address + " " + targetAddress + "  " + transferValue);
+                        rng.GetBytes(randomBytes);
                     }
+                    BigInteger randomNum = new BigInteger(randomBytes);
+                    sb.EmitPushNumber(randomNum);
+                    sb.Emit(ThinNeo.VM.OpCode.DROP);
+                    sb.EmitParamJson(array);
+                    sb.EmitPushString("transfer");
+                    sb.EmitAppCall(new Hash160(ContractHash));
+
+                    ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
+                    extdata.script = sb.ToArray();
+
+                    //extdata.gas = Math.Ceiling(gas_consumed - 10);
+                    extdata.gas = 0;
+
+                    ThinNeo.Transaction tran = Helper.makeTran(null, null, null, extdata.gas);
+                    tran.version = 1;
+                    tran.extdata = extdata;
+                    tran.type = ThinNeo.TransactionType.InvocationTransaction;
+
+                    //附加鉴证
+                    tran.attributes = new ThinNeo.Attribute[1];
+                    tran.attributes[0] = new ThinNeo.Attribute();
+                    tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
+                    tran.attributes[0].data = scripthash;
+
+                    byte[] msg = tran.GetMessage();
+                    byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
+                    tran.AddWitness(signdata, pubkey, address);
+                    string txid = tran.GetHash().ToString();
+                    byte[] data = tran.GetRawData();
+                    string rawdata = ThinNeo.Helper.Bytes2HexString(data);
+
+                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                    postRawArray.AddArrayValue(ChainHash);
+                    postRawArray.AddArrayValue(rawdata);
+
+                    byte[] postdata;
+                    var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+                    var result = Helper.HttpPost(url, postdata);
+                    Console.WriteLine(address + " " + targetAddress + "  " + transferValue);
                 }
             }
         }
@@ -104,6 +101,10 @@ namespace InvokeContractTest
             //ContractHash = messages[3];
             //transferValue = messages[4];
 
+            Console.WriteLine("Params:ThreadNum 开启几条线程");
+            var param = Console.ReadLine();
+            Console.WriteLine("start {0} Thread", param);
+
             ChainHash = Config.getValue("ChainHash");
             WIF = Config.getValue("WIF");
             targetWIF = Config.getValue("targetWIF");
@@ -119,7 +120,7 @@ namespace InvokeContractTest
             byte[] targetpubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(tragetprikey);
             targetAddress = ThinNeo.Helper.GetAddressFromPublicKey(targetpubkey);
             targetscripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetAddress);
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < int.Parse(param); i++)
             {
                 Task.Factory.StartNew(ThreadMethodAsync);
             }
