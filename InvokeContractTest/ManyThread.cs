@@ -33,26 +33,16 @@ namespace InvokeContractTest
 
         public void ThreadMethodAsync()
         {
+            ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder();
             MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
             array.AddArrayValue("(addr)" + address);//from
             array.AddArrayValue("(addr)" + targetAddress);//to
             array.AddArrayValue("(int)" + transferValue);//value
+            sb.EmitPushString("transfer");
+            sb.EmitAppCall(new Hash160(ContractHash));
             while (true)
             {
-                using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
-                {
-                    byte[] randomBytes = new byte[32];
-                    using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(randomBytes);
-                    }
-                    BigInteger randomNum = new BigInteger(randomBytes);
-                    sb.EmitPushNumber(randomNum);
-                    sb.Emit(ThinNeo.VM.OpCode.DROP);
-                    sb.EmitParamJson(array);
-                    sb.EmitPushString("transfer");
-                    sb.EmitAppCall(new Hash160(ContractHash));
-
+                lock (typeof(ManyThread)) {
                     ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
                     extdata.script = sb.ToArray();
 
@@ -65,10 +55,16 @@ namespace InvokeContractTest
                     tran.type = ThinNeo.TransactionType.InvocationTransaction;
 
                     //附加鉴证
-                    tran.attributes = new ThinNeo.Attribute[1];
+                    byte[] nonce = new byte[8];
+                    RandomNumberGenerator rng = RandomNumberGenerator.Create();
+                    rng.GetBytes(nonce);
+                    tran.attributes = new ThinNeo.Attribute[2];
                     tran.attributes[0] = new ThinNeo.Attribute();
                     tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
                     tran.attributes[0].data = scripthash;
+                    tran.attributes[1] = new ThinNeo.Attribute();
+                    tran.attributes[1].usage = TransactionAttributeUsage.Remark;
+                    tran.attributes[1].data = nonce;
 
                     byte[] msg = tran.GetMessage();
                     byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
@@ -85,7 +81,22 @@ namespace InvokeContractTest
                     var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
                     var result = Helper.HttpPost(url, postdata);
                     Console.WriteLine(address + " " + targetAddress + "  " + transferValue);
+                    //}
                 }
+                //using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
+                //{
+                //    byte[] randomBytes = new byte[32];
+                //    using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                //    {
+                //        rng.GetBytes(randomBytes);
+                //    }
+                //    BigInteger randomNum = new BigInteger(randomBytes);
+                //    sb.EmitPushNumber(randomNum);
+                //    sb.Emit(ThinNeo.VM.OpCode.DROP);
+                //    sb.EmitParamJson(array);
+                //    sb.EmitPushString("transfer");
+                //    sb.EmitAppCall(new Hash160(ContractHash));
+
             }
         }
 
