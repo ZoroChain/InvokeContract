@@ -149,8 +149,6 @@ namespace InvokeContractTest
             tran.extdata = null;
 
             tran.attributes = new ThinNeo.Attribute[0];
-            var scraddr = "";
-            decimal count = decimal.Zero;
             List<ThinNeo.TransactionInput> list_inputs = new List<ThinNeo.TransactionInput>();
             tran.inputs = list_inputs.ToArray();
             List<ThinNeo.TransactionOutput> list_outputs = new List<ThinNeo.TransactionOutput>();

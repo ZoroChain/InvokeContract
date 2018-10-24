@@ -57,6 +57,9 @@ namespace InvokeContractTest
             string targetAddress = ThinNeo.Helper.GetAddressFromPublicKey(targetpubkey);
             var targetscripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetAddress);
 
+            Console.WriteLine(WIF.ToString());
+            Console.WriteLine(targetWIF.ToString());
+
             //ThreadPool.QueueUserWorkItem(async (p) => {
             //    while (true)
             //    {

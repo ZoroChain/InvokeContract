@@ -17,8 +17,7 @@ namespace InvokeContractTest
 {
     class Program
     {
-        string api = "https://api.nel.group/api/testnet";
-        public static string local = "http://127.0.0.1:23332/";
+        public static string local = "http://127.0.0.1:20332/";
 
         public static string id_GAS = "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7";  
 

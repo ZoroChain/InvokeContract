@@ -61,7 +61,7 @@ namespace InvokeContractTest
 
             if (stack.Count == 1)
             {
-                Console.WriteLine("balanceOf:" + Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object));
+                Console.WriteLine("balanceOf:" + WIF.ToString() + "  "+ Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object));
             }
         }
     }
