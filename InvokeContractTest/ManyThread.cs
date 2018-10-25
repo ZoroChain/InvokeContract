@@ -61,7 +61,7 @@ namespace InvokeContractTest
             tran.type = ThinNeo.TransactionType.InvocationTransaction;
 
             //附加鉴证
-            byte[] nonce = new byte[8];
+            byte[] nonce = new byte[32];
             RandomNumberGenerator rng = RandomNumberGenerator.Create();
             rng.GetBytes(nonce);
             tran.attributes = new ThinNeo.Attribute[2];

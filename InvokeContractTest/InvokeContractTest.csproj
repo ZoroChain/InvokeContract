@@ -13,4 +13,10 @@
     <ProjectReference Include="..\thinSDK_neo\thinSDK_neo.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

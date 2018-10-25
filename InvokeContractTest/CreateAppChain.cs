@@ -30,13 +30,10 @@ namespace InvokeContractTest
         public string ChainHash;
 
         public async Task StartAsync() {
-            Console.WriteLine("Params:ChainHash,WIF,appChainName");
-            var param = Console.ReadLine();
-            string[] messages = param.Split(",");
-            Console.WriteLine("ChainHash:{0}, WIF:{1}, appChainName:{2}", messages[0], messages[1], messages[2]);
-            ChainHash = messages[0];
-            WIF = messages[1];
-            name = messages[2];
+            Console.WriteLine("AppChainName:");
+            name = Console.ReadLine();
+            WIF = Config.getValue("WIF");
+            ChainHash = "0";
 
             Console.Write("validators Length: ");
             string vlength = Console.ReadLine();
