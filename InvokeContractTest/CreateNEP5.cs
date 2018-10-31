@@ -67,7 +67,7 @@ namespace InvokeContractTest
                 sb.EmitPushBytes(return_type);
                 sb.EmitPushBytes(parameter__list);
                 sb.EmitPushBytes(script);
-                sb.EmitSysCall("Zoro.Contract.Create");
+                sb.EmitSysCall("Neo.Contract.Create");
 
                 string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
 
@@ -111,12 +111,20 @@ namespace InvokeContractTest
                 byte[] data = tran.GetRawData();
                 string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(ChainHash);
-                postRawArray.AddArrayValue(rawdata);
+                if (ChainHash.Length > 0)
+                {
+                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                    postRawArray.AddArrayValue(ChainHash);
+                    postRawArray.AddArrayValue(rawdata);
 
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                result = await Helper.HttpPost(url, postdata);
+                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+                    result = await Helper.HttpPost(url, postdata);
+                }
+                else
+                {
+                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+                    result = await Helper.HttpPost(url, postdata);
+                }
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

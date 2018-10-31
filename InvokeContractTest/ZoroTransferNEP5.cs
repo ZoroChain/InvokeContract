@@ -87,13 +87,22 @@ namespace InvokeContractTest
                 ZoroHelper.AddWitness(tx, signdata, pubkey);
                 string rawdata = ThinNeo.Helper.Bytes2HexString(tx.ToArray());
 
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(ChainHash);
-                postRawArray.AddArrayValue(rawdata);
-
+                string url;
                 byte[] postdata;
-                var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                var result = await Helper.HttpPost(url, postdata);
+                if (ChainHash.Length > 0)
+                {
+                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                    postRawArray.AddArrayValue(ChainHash);
+                    postRawArray.AddArrayValue(rawdata);
+
+                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+                }
+                else
+                {
+                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+                }
+
+                var result = Helper.HttpPost(url, postdata);
                 Console.WriteLine(pubkey.ToString() + " " + targetpubkey.ToString() + "  " + transferValue);
             }
 

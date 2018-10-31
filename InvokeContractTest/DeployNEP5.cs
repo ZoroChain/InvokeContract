@@ -78,12 +78,21 @@ namespace InvokeContractTest
                 byte[] data = tran.GetRawData();
                 string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(ChainHash);
-                postRawArray.AddArrayValue(rawdata);
+                if (ChainHash.Length > 0)
+                {
+                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                    postRawArray.AddArrayValue(ChainHash);
+                    postRawArray.AddArrayValue(rawdata);
 
-                var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                var result = await Helper.HttpPost(url, postdata);
+                    var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+                    var result = await Helper.HttpPost(url, postdata);
+                }
+                else
+                {
+                    var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+                    var result = await Helper.HttpPost(url, postdata);
+                }
+
             }
         }
     }
