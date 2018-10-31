@@ -37,7 +37,7 @@ namespace InvokeContractTest
         public string transferValue;
         public int transNum = 0;
 
-        protected async Task testTransfer(int tid, int idx)
+        protected void testTransfer(int tid, int idx)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -79,19 +79,19 @@ namespace InvokeContractTest
 
                 byte[] postdata;
                 var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                var result = await Helper.HttpPost(url, postdata);
+                var result = Helper.HttpPost(url, postdata);
                 Console.WriteLine(tid + " " + idx + ": " + "sendrawtransaction " + transferValue);
             }
         }
 
 
-        public async Task ThreadMethodAsync()
+        public void ThreadMethodAsync()
         {
             int ThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
 
             for (var i = 0; i < transNum; i++)
             {
-                await testTransfer(ThreadId, i);
+                testTransfer(ThreadId, i);
             }
         }
 
