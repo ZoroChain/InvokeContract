@@ -71,14 +71,22 @@ namespace InvokeContractTest
 
                 string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
 
-                MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                postArray.AddArrayValue(ChainHash);
-                postArray.AddArrayValue(scriptPublish);
-
                 byte[] postdata;
-                var url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
+                string url;
+                if (ChainHash.Length > 0)
+                {
+                    MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
+                    postArray.AddArrayValue(ChainHash);
+                    postArray.AddArrayValue(scriptPublish);
+
+                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
+                }
+                else
+                {
+                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
+                }
+
                 var result = await Helper.HttpPost(url, postdata);
-                //return;
 
                 MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
                 MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
