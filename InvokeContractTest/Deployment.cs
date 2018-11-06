@@ -20,7 +20,7 @@ namespace InvokeContractTest
         public string ContractHash = "";
         public string transferValue = "";
 
-        public int waitTime = 10;
+        public int waitTime = 3;
 
         public async Task StartAsync()
         {
@@ -52,7 +52,7 @@ namespace InvokeContractTest
 
             Thread.Sleep(waitTime * 1000);
 
-            var TransferNEP5 = Program.allExample["2"] as TransferNEP5;
+            var TransferNEP5 = Program.allExample["2"] as ZoroTransferNEP5;
             await TransferNEP5.TransferNEP5Async(ChainHash, WIF, targetWIF, ContractHash, transferValue);
         }
     }
