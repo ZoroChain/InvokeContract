@@ -102,8 +102,9 @@ namespace InvokeContractTest
                     url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
                 }
 
-                var result = Helper.HttpPost(url, postdata);
-                Console.WriteLine(pubkey.ToString() + " " + targetpubkey.ToString() + "  " + transferValue);
+                var result = await Helper.HttpPost(url, postdata);
+                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                Console.WriteLine(resJO.ToString());
             }
 
         }

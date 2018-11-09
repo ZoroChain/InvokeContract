@@ -1,5 +1,16 @@
 {
   "ChainHash": "0",
+  "ChainHashList": [
+    "0",
+    "0xdba6bb7edc4928ec64205e0cfe565b2e6ea315aa",
+    "0xbcb9b86d5aabaf8b175c71b834a0ce9d7b340c6b",
+    "0x7c7e5e5101ae252653da5528deb40f57361ebfea",
+    "0x98f51136c5f8cbccaaeaecfee16250fb38008e5b",
+    "0x0588f64da2287e766bfdea237fdbfca938d4649f",
+    "0xf97d52dab58dd778bf9a41d910ad74dfb7c6f21d",
+    "0xd885fe65da1f3ad4d16f0bf65a85760aae497a31",
+    "0x878544612425f335ee5b1390376645edf1e01f9a"
+  ],
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
