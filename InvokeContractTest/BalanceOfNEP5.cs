@@ -18,6 +18,7 @@ namespace InvokeContractTest
         public string ChainHash { get => chainHash; set => chainHash = value; }
         public string WIF { get => wif; set => wif = value; }
         public string ContractHash { get => contractHash; set => contractHash = value; }
+        public string[] ChainHashList { get; private set; }
 
         public async Task StartAsync()
         {
@@ -30,6 +31,7 @@ namespace InvokeContractTest
             //ContractHash = messages[2];
 
             ChainHash = Config.getValue("ChainHash");
+            ChainHashList = Config.getStringArray("ChainHashList");
             WIF = Config.getValue("WIF");
             ContractHash = Config.getValue("ContractHash");
 
@@ -45,23 +47,32 @@ namespace InvokeContractTest
             sb.EmitPushString("balanceOf");
             sb.EmitAppCall(new Hash160(ContractHash));
 
+            Console.WriteLine($"Address: {WIF.ToString()}");
+
             string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
-
-            byte[] postdata;
             string url;
-            if (ChainHash.Length > 0)
+            byte[] postdata;
+            if (ChainHashList.Length > 0)
             {
-                MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                postArray.AddArrayValue(ChainHash);
-                postArray.AddArrayValue(scriptPublish);
+                foreach (var chainHash in ChainHashList)
+                {
+                    MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
+                    postArray.AddArrayValue(chainHash);
+                    postArray.AddArrayValue(scriptPublish);
 
-                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
+                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
+                    await BalanceOf(chainHash, url, postdata);
+                }
             }
             else
             {
                 url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
+                await BalanceOf("", url, postdata);
             }
+        }
 
+        async Task BalanceOf(string chainHash, string url, byte[] postdata)
+        {
             var result = await Helper.HttpPost(url, postdata);
 
             MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
@@ -70,7 +81,9 @@ namespace InvokeContractTest
 
             if (stack.Count == 1)
             {
-                Console.WriteLine("balanceOf:" + WIF.ToString() + "  "+ Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object));
+                string value = Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object);
+                string str = $"balanceOf: " + value;
+                Console.WriteLine(str);
             }
         }
     }

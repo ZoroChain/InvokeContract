@@ -13,12 +13,13 @@ namespace InvokeContractTest
 
         public string ID => "7";
 
-        public string ChainHash = "";
+        //public string ChainHash = "";
         public string WIF = "";
         public string targetWIF = "";
         public string ContractPath = "";
         public string ContractHash = "";
         public string transferValue = "";
+        public string[] ChainHashList { get; private set; }
 
         public int waitTime = 3;
 
@@ -35,7 +36,9 @@ namespace InvokeContractTest
             //ContractHash = messages[4] == "" ? "c4108917282bff79b156d4d01315df811790c0e8" : messages[4];
             //transferValue = messages[5] == "" ? "10000000000" : messages[5];
 
-            ChainHash = Config.getValue("ChainHash");
+            //ChainHash = Config.getValue("ChainHash");
+            ChainHashList = Config.getStringArray("ChainHashList");
+
             WIF = Config.getValue("WIF");
             targetWIF = Config.getValue("targetWIF");
             ContractPath = Config.getValue("ContractPath");
@@ -43,17 +46,16 @@ namespace InvokeContractTest
             transferValue = Config.getValue("transferValue");
 
             var createNep5 = Program.allExample["0"] as CreateNEP5;
-            await createNep5.CreateNep5Async(ChainHash, WIF, ContractPath);
-
-            Thread.Sleep(waitTime * 1000);
-
             var deployNEP5 = Program.allExample["1"] as DeployNEP5;
-            await deployNEP5.DeployNEP5Async(ChainHash, WIF, ContractHash);
-
-            Thread.Sleep(waitTime * 1000);
-
             var TransferNEP5 = Program.allExample["2"] as ZoroTransferNEP5;
-            await TransferNEP5.TransferNEP5Async(ChainHash, WIF, targetWIF, ContractHash, transferValue);
+
+            foreach (var chainHash in ChainHashList)
+            {
+                await createNep5.CreateNep5Async(chainHash, WIF, ContractPath);
+                Thread.Sleep(waitTime * 1000);
+                await deployNEP5.DeployNEP5Async(chainHash, WIF, ContractHash);
+                await TransferNEP5.TransferNEP5Async(chainHash, WIF, targetWIF, ContractHash, transferValue);
+            }
         }
     }
 }
