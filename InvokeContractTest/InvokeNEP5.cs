@@ -10,7 +10,7 @@ namespace InvokeContractTest
     {
         public string Name => "invoke 预调用合约方法";
 
-        public string ID => "4";
+        public string ID => "2";
 
         private string chainHash;
         private string wif;

@@ -47,7 +47,7 @@ namespace InvokeContractTest
 
             var createNep5 = Program.allExample["0"] as CreateNEP5;
             var deployNEP5 = Program.allExample["1"] as DeployNEP5;
-            var TransferNEP5 = Program.allExample["2"] as ZoroTransferNEP5;
+            var TransferNEP5 = Program.allExample["4"] as ZoroTransferNEP5;
 
             foreach (var chainHash in ChainHashList)
             {

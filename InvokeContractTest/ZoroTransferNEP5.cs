@@ -17,7 +17,7 @@ namespace InvokeContractTest
     {
         public string Name => "transfer 进行一次nep5合约交易";
 
-        public string ID => "2";
+        public string ID => "4";
 
         private string chainHash;
         private string wif;

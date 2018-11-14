@@ -49,10 +49,12 @@ namespace InvokeContractTest
             RegExample(new BalanceOfNEP5());
             //RegExample(new TransferNEP5());
             //RegExample(new ManyThread());
-            RegExample(new CreateAppChain());
-            RegExample(new Deployment());
             RegExample(new ZoroTransferNEP5());
             RegExample(new ZoroManyThread());
+            RegExample(new CreateAppChain());
+            RegExample(new Deployment());
+            RegExample(new ChangeSeedList());
+            RegExample(new ChangeValidators());
         }
 
         static void ShowMenu()
