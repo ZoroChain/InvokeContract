@@ -36,14 +36,15 @@ namespace InvokeContractTest
             await CreateNep5Async(ChainHash, WIF, ContractPath);
         }
 
-        public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath) {
+        public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath)
+        {
             byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
             byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
             string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
             Hash160 scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
 
             byte[] script = System.IO.File.ReadAllBytes(ContractPath);
-            Console.WriteLine("合约脚本：" + ThinNeo.Helper.Bytes2HexString(script));
+            //Console.WriteLine("合约脚本：" + ThinNeo.Helper.Bytes2HexString(script));
             Console.WriteLine("合约脚本Hash：" + ThinNeo.Helper.Bytes2HexString(ThinNeo.Helper.GetScriptHashFromScript(script).data.ToArray().Reverse().ToArray()));
             byte[] parameter__list = ThinNeo.Helper.HexString2Bytes("0710");
             byte[] return_type = ThinNeo.Helper.HexString2Bytes("05");
@@ -73,7 +74,7 @@ namespace InvokeContractTest
 
                 byte[] postdata;
                 string url;
-                if (ChainHash.Length > 0)
+                if (Program.ChainID == "Zoro")
                 {
                     MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
                     postArray.AddArrayValue(ChainHash);
@@ -119,7 +120,7 @@ namespace InvokeContractTest
                 byte[] data = tran.GetRawData();
                 string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
-                if (ChainHash.Length > 0)
+                if (Program.ChainID == "Zoro")
                 {
                     MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
                     postRawArray.AddArrayValue(ChainHash);

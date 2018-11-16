@@ -78,7 +78,7 @@ namespace InvokeContractTest
                 byte[] data = tran.GetRawData();
                 string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
-                if (ChainHash.Length > 0)
+                if (Program.ChainID == "Zoro")
                 {
                     MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
                     postRawArray.AddArrayValue(ChainHash);

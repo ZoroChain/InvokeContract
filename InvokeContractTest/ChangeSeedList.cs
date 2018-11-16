@@ -13,9 +13,6 @@ namespace InvokeContractTest
 
         public string ID => "8";
 
-        public string WIF;
-        public string ChainHash;
-
         public async Task StartAsync()
         {
             Console.WriteLine("AppChainHash:");
@@ -50,8 +47,7 @@ namespace InvokeContractTest
                 return;
             }
 
-            WIF = Config.getValue("WIF");
-            ChainHash = "0";
+            string WIF = Config.getValue("WIF");
 
             Console.Write("seedList Length: ");
             string slength = Console.ReadLine();
@@ -112,7 +108,7 @@ namespace InvokeContractTest
             string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
             MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-            postRawArray.AddArrayValue(ChainHash);
+            postRawArray.AddArrayValue("");
             postRawArray.AddArrayValue(rawdata);
 
             byte[] postdata;

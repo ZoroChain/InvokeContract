@@ -12,31 +12,17 @@ namespace InvokeContractTest
 
         public string ID => "2";
 
-        private string chainHash;
-        private string wif;
-        private string targetwif;
-        private string contractPath;
-        private string contractHash;
-        public string ChainHash { get => chainHash; set => chainHash = value; }
-        public string WIF { get => wif; set => wif = value; }
-        public string targetWIF { get => targetwif; set => targetwif = value; }
-        public string ContractPath { get => contractPath; set => contractPath = value; }
-        public string ContractHash { get => contractHash; set => contractHash = value; }
-
         public async Task StartAsync()
         {
-            //Console.WriteLine("Params:ChainHash,WIF,ContractHash");
-            //var param = Console.ReadLine();
-            //string[] messages = param.Split(",");
-            //Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
-            //ChainHash = messages[0];
-            //WIF = messages[1];
-            //ContractHash = messages[2];
+            string chainHash = Config.getValue("ChainHash");
+            string wif = Config.getValue("WIF");
+            string contractHash = Config.getValue("ContractHash");
 
-            ChainHash = Config.getValue("ChainHash");
-            WIF = Config.getValue("WIF");
-            ContractHash = Config.getValue("ContractHash");
+            await InvokeNep5Async(chainHash, wif, contractHash);
+        }
 
+        public async Task InvokeNep5Async(string chainHash, string WIF, string ContractHash)
+        {
             ScriptBuilder sb = new ScriptBuilder();
             MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
             sb.EmitParamJson(array);
@@ -57,13 +43,12 @@ namespace InvokeContractTest
 
             string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
 
-
             byte[] postdata;
             string url;
-            if (ChainHash.Length > 0)
+            if (Program.ChainID == "Zoro")
             {
                 MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                postArray.AddArrayValue(ChainHash);
+                postArray.AddArrayValue(chainHash);
                 postArray.AddArrayValue(scriptPublish);
 
                 url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());

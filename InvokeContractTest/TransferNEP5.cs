@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ThinNeo;
+using System.Security.Cryptography;
+using Zoro;
+using Zoro.IO;
+using Zoro.Ledger;
+using Zoro.Network.P2P.Payloads;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
@@ -27,16 +31,6 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            //Console.WriteLine("Params:ChainHash,WIF,targetWIF,ContractHash,transferValue");
-            //var param = Console.ReadLine();
-            //string[] messages = param.Split(",");
-            //Console.WriteLine("ChainHash:{0}, WIF:{1}, targetWIF:{2}, ContractPath:{3}, transferValue:{4}", messages[0], messages[1], messages[2], messages[3], messages[4]);
-            //ChainHash = messages[0];
-            //WIF = messages[1];
-            //targetWIF = messages[2];
-            //ContractHash = messages[3];
-            //transferValue = messages[4];
-
             ChainHash = Config.getValue("ChainHash");
             WIF = Config.getValue("WIF");
             targetWIF = Config.getValue("targetWIF");
@@ -47,23 +41,19 @@ namespace InvokeContractTest
         }
 
         public async Task TransferNEP5Async(string ChainHash, string WIF, string targetWIF, string ContractHash, string transferValue) {
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            var scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
 
-            byte[] tragetprikey = ThinNeo.Helper.GetPrivateKeyFromWIF(targetWIF);
-            byte[] targetpubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(tragetprikey);
-            string targetAddress = ThinNeo.Helper.GetAddressFromPublicKey(targetpubkey);
-            var targetscripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetAddress);
+            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
+            Zoro.Cryptography.ECC.ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+
+            byte[] tragetprikey = ZoroHelper.GetPrivateKeyFromWIF(targetWIF);
+            Zoro.Cryptography.ECC.ECPoint targetpubkey = ZoroHelper.GetPublicKeyFromPrivateKey(tragetprikey);
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHash(targetpubkey);
 
             Console.WriteLine(WIF.ToString());
             Console.WriteLine(targetWIF.ToString());
 
-            //ThreadPool.QueueUserWorkItem(async (p) => {
-            //    while (true)
-            //    {
-            using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
                 MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
                 byte[] randomBytes = new byte[32];
@@ -72,48 +62,34 @@ namespace InvokeContractTest
                     rng.GetBytes(randomBytes);
                 }
                 BigInteger randomNum = new BigInteger(randomBytes);
-                sb.EmitPushNumber(randomNum);
-                sb.Emit(ThinNeo.VM.OpCode.DROP);
-                array.AddArrayValue("(addr)" + address);//from
-                array.AddArrayValue("(addr)" + targetAddress);//to
-                array.AddArrayValue("(int)" + transferValue);//value
-                sb.EmitParamJson(array);
-                sb.EmitPushString("transfer");
-                sb.EmitAppCall(new Hash160(ContractHash));
+                sb.EmitPush(randomNum);
+                sb.EmitPush(Neo.VM.OpCode.DROP);
+                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
+                InvocationTransaction tx = new InvocationTransaction
+                {
+                    ChainHash = ZoroHelper.Parse(ChainHash),
+                    Version = 1,
+                    Script = sb.ToArray(),
+                    Gas = Fixed8.Zero,
+                };
 
-                MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                postArray.AddArrayValue(ChainHash);
-                postArray.AddArrayValue(scriptPublish);
+                tx.Inputs = new CoinReference[0];
+                tx.Outputs = new TransactionOutput[0];
 
-                ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
-                extdata.script = sb.ToArray();
+                tx.Attributes = new TransactionAttribute[1];
+                tx.Attributes[0] = new TransactionAttribute();
+                tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
+                tx.Attributes[0].Data = scriptHash.ToArray();
 
-                //extdata.gas = Math.Ceiling(gas_consumed - 10);
-                extdata.gas = 0;
-
-                ThinNeo.Transaction tran = Helper.makeTran(null, null, new ThinNeo.Hash256(Program.id_GAS), extdata.gas);
-                tran.version = 1;
-                tran.extdata = extdata;
-                tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
-                //附加鉴证
-                tran.attributes = new ThinNeo.Attribute[1];
-                tran.attributes[0] = new ThinNeo.Attribute();
-                tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-                tran.attributes[0].data = scripthash;
-
-                byte[] msg = tran.GetMessage();
-                byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
-                tran.AddWitness(signdata, pubkey, address);
-                string txid = tran.GetHash().ToString();
-                byte[] data = tran.GetRawData();
-                string rawdata = ThinNeo.Helper.Bytes2HexString(data);
+                byte[] data = ZoroHelper.GetHashData(tx);
+                byte[] signdata = ZoroHelper.Sign(data, prikey, pubkey);
+                ZoroHelper.AddWitness(tx, signdata, pubkey);
+                string rawdata = ThinNeo.Helper.Bytes2HexString(tx.ToArray());
 
                 string url;
                 byte[] postdata;
-                if (ChainHash.Length > 0)
+                if (Program.ChainID == "Zoro")
                 {
                     MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
                     postRawArray.AddArrayValue(ChainHash);
@@ -127,10 +103,10 @@ namespace InvokeContractTest
                 }
 
                 var result = await Helper.HttpPost(url, postdata);
-                Console.WriteLine(address + " " + targetAddress + "  " + transferValue);
+                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                Console.WriteLine(resJO.ToString());
             }
-            //    }
-            //});
+
         }
     }
 }

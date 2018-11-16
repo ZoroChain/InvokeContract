@@ -17,10 +17,11 @@ namespace InvokeContractTest
 {
     class Program
     {
-        public static string local = "http://127.0.0.1:20332/";
+        public static string local = Config.getValue("RpcUrl");
 
-        public static string id_GAS = "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7";  
+        public static string id_GAS = "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7";
 
+        public static string ChainID = Config.getValue("ChainID");
 
         static void Main(string[] args)
         {
@@ -47,10 +48,8 @@ namespace InvokeContractTest
             RegExample(new DeployNEP5());
             RegExample(new InvokeNEP5());
             RegExample(new BalanceOfNEP5());
-            //RegExample(new TransferNEP5());
-            //RegExample(new ManyThread());
-            RegExample(new ZoroTransferNEP5());
-            RegExample(new ZoroManyThread());
+            RegExample(new TransferNEP5());
+            RegExample(new CocurrentNEP5Transfer());
             RegExample(new CreateAppChain());
             RegExample(new Deployment());
             RegExample(new ChangeSeedList());

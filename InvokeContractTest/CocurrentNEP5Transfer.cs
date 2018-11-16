@@ -13,18 +13,15 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class ZoroManyThread : IExample
+    class CocurrentNEP5Transfer : IExample
     {
-        public string Name => "ManyThread 开启多线程多次交易";
+        public string Name => "ManyThread 开启并发交易";
 
         public string ID => "5";
 
-        private string wif;
-        private string targetwif;
-        private string contractHash;
-        public string WIF { get => wif; set => wif = value; }
-        public string targetWIF { get => targetwif; set => targetwif = value; }
-        public string ContractHash { get => contractHash; set => contractHash = value; }
+        public string WIF { get; private set; }
+        public string targetWIF { get; private set; }
+        public string ContractHash { get; private set; }
         public string[] ChainHashList { get; private set; }
 
         private byte[] prikey;
@@ -40,7 +37,7 @@ namespace InvokeContractTest
 
         protected async Task testTransfer(int idx, int chainIdx)
         {
-            string ChainHash = ChainHashList[chainIdx];
+            string chainHash = ChainHashList[chainIdx];
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -57,7 +54,7 @@ namespace InvokeContractTest
 
                 InvocationTransaction tx = new InvocationTransaction
                 {
-                    ChainHash = ZoroHelper.Parse(ChainHash),
+                    ChainHash = ZoroHelper.Parse(chainHash),
                     Version = 1,
                     Script = sb.ToArray(),
                     Gas = Fixed8.Zero,
@@ -78,10 +75,10 @@ namespace InvokeContractTest
 
                 string url;
                 byte[] postdata;
-                if (ChainHash.Length > 0)
+                if (Program.ChainID == "Zoro")
                 {
                     MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                    postRawArray.AddArrayValue(ChainHash);
+                    postRawArray.AddArrayValue(chainHash);
                     postRawArray.AddArrayValue(rawdata);
 
                     url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
@@ -105,7 +102,7 @@ namespace InvokeContractTest
             }
         }
 
-        public async Task ThreadMethodAsync()
+        public async Task RunTransferTask()
         {
             Random rd = new Random();
 
@@ -126,12 +123,11 @@ namespace InvokeContractTest
                     await testTransfer(i ++, rd.Next(0, chainNum));
                 }
             }
-
         }
 
         public async Task StartAsync()
         {
-            Console.WriteLine("开启几条线程:");
+            Console.WriteLine("输入并发的数量:");
             var param1 = Console.ReadLine();
             Console.WriteLine("发送几次交易");
             var param2 = Console.ReadLine();
@@ -178,7 +174,7 @@ namespace InvokeContractTest
 
         public void RunTestTask()
         {
-            Task.Run(async () => { await ThreadMethodAsync(); });
+            Task.Run(async () => { await RunTransferTask(); });
         }
     }
 }

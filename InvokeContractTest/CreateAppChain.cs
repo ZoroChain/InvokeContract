@@ -12,39 +12,26 @@ namespace InvokeContractTest
 {
     class CreateAppChain:IExample
     {
-        public string[] validators = new string[] {   "02e42b7e95cd9d91d8b473a340b1c2827d50715f9e95ce003587dc29513499cb08",
-                                                      "03b8d429f0d57a8cdf93dc7faf850fef23d2a17ce669bba7640cd0bcda21eafb0b",
-                                                      "02da01221b5d9064305ababd48bea8fadbd09ec2f1a4e674d470de80ce345cc356",
-                                                      "031f210b12e522205295cec1e28e1420cb581d1235157015a1dbb033586530b704"};
-        public string[] seedList = new string[] { "127.0.0.1:32001",
-                                                  "127.0.0.1:32002",
-                                                  "127.0.0.1:32003",
-                                                  "127.0.0.1:32004"};
-        public string name = "New appChain";
-
         public string Name => "createAppChain 创建应用链";
 
         public string ID => "6";
 
-        public string WIF;
-        public string ChainHash;
-
-        public async Task StartAsync() {
+        public async Task StartAsync()
+        {
             Console.WriteLine("AppChainName:");
-            name = Console.ReadLine();
-            WIF = Config.getValue("WIF");
-            ChainHash = "0";
+            string name = Console.ReadLine();
+            string WIF = Config.getValue("WIF");
 
             Console.Write("validators Length: ");
             string vlength = Console.ReadLine();
-            validators = new string[int.Parse(vlength)];
+            string[] validators = new string[int.Parse(vlength)];
             for (int i = 0; i < validators.Length; i++) {
                 Console.Write("validator " + (i + 1) + ": ");
                 validators[i] = Console.ReadLine();
             }
             Console.Write("seedList Length: ");
             string slength = Console.ReadLine();
-            seedList = new string[int.Parse(slength)];
+            string[] seedList = new string[int.Parse(slength)];
             for (int i = 0; i < seedList.Length; i++) {
                 Console.Write("seed " + (i + 1) + ": ");
                 seedList[i] = Console.ReadLine();
@@ -104,7 +91,7 @@ namespace InvokeContractTest
             string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
             MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-            postRawArray.AddArrayValue(ChainHash);
+            postRawArray.AddArrayValue("");
             postRawArray.AddArrayValue(rawdata);
 
             var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());

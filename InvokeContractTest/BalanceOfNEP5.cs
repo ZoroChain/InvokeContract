@@ -12,25 +12,12 @@ namespace InvokeContractTest
 
         public string ID => "3";
 
-        private string chainHash;
-        private string wif;
-        private string contractHash;
-        public string ChainHash { get => chainHash; set => chainHash = value; }
-        public string WIF { get => wif; set => wif = value; }
-        public string ContractHash { get => contractHash; set => contractHash = value; }
+        public string WIF { get; private set; }
+        public string ContractHash { get; private set; }
         public string[] ChainHashList { get; private set; }
 
         public async Task StartAsync()
         {
-            //Console.WriteLine("Params:ChainHash,WIF,ContractHash");
-            //var param = Console.ReadLine();
-            //string[] messages = param.Split(",");
-            //Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
-            //ChainHash = messages[0];
-            //WIF = messages[1];
-            //ContractHash = messages[2];
-
-            ChainHash = Config.getValue("ChainHash");
             ChainHashList = Config.getStringArray("ChainHashList");
             WIF = Config.getValue("WIF");
             ContractHash = Config.getValue("ContractHash");
@@ -76,14 +63,22 @@ namespace InvokeContractTest
             var result = await Helper.HttpPost(url, postdata);
 
             MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
-            MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
-            MyJson.JsonNode_Array stack = json_result_obj["stack"].AsList();
 
-            if (stack.Count == 1)
+            if (json_result_array.ContainsKey("result"))
             {
-                string value = Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object);
-                string str = $"balanceOf: " + value;
-                Console.WriteLine(str);
+                MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
+                MyJson.JsonNode_Array stack = json_result_obj["stack"] as MyJson.JsonNode_Array;
+
+                if (stack != null && stack.Count >= 1)
+                {
+                    string value = Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object);
+                    Console.WriteLine($"balanceOf {chainHash}: {value}");
+                }
+            }
+            else if(json_result_array.ContainsKey("error"))
+            {
+                MyJson.JsonNode_Object json_error_obj = json_result_array["error"] as MyJson.JsonNode_Object;
+                Console.WriteLine($"balanceOf {chainHash}: {json_error_obj}");
             }
         }
     }
