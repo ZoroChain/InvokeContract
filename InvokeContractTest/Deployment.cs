@@ -34,8 +34,8 @@ namespace InvokeContractTest
             {
                 await createNep5.CreateNep5Async(chainHash, WIF, ContractPath);
                 Thread.Sleep(waitTime * 1000);
-
                 await deployNEP5.DeployNEP5Async(chainHash, WIF, ContractHash);
+                Thread.Sleep(waitTime * 1000);
                 await invokeNEP5.InvokeNep5Async(chainHash, WIF, ContractHash);
                 await TransferNEP5.TransferNEP5Async(chainHash, WIF, targetWIF, ContractHash, transferValue);
             }
