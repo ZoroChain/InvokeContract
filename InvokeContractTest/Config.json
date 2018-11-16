@@ -2,10 +2,8 @@
   "ChainID": "Zoro",
   "ChainHash": "",
   "ChainHashList": [
-    "",
-    "0x50ee4aa90cc84afe52a3d130ad72ba44ed541b98",
-    "0x1093c2be29934ceb0e43c801638508d29785f6d4",
-    "0x2641f491e223c2bf6ed4a852b6a1a8bc9dd4897d"
+    "0xa0886d387d20bd25abb895206f1b6405ddfa1d8e",
+    "0xe55cbd5aea7dc8b3dc6786c83a27103b0a91f378"
   ],
   "RpcUrl": "http://115.159.53.39:20332",
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
