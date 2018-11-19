@@ -78,7 +78,6 @@ namespace InvokeContractTest
                 sb.EmitPushString(validator);
             }
             sb.EmitPushNumber(validators.Length);
-            sb.EmitPushBytes(chainHash.ToArray());
             sb.EmitSysCall("Zoro.AppChain.ChangeValidators");
             
             string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
@@ -108,7 +107,7 @@ namespace InvokeContractTest
             string rawdata = ThinNeo.Helper.Bytes2HexString(data);
 
             MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-            postRawArray.AddArrayValue("");
+            postRawArray.AddArrayValue(appchainHash);
             postRawArray.AddArrayValue(rawdata);
 
             byte[] postdata;
