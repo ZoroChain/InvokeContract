@@ -54,6 +54,7 @@ namespace InvokeContractTest
             RegExample(new Deployment());
             RegExample(new ChangeSeedList());
             RegExample(new ChangeValidators());
+            RegExample(new LocalTest_HashSet());
         }
 
         static void ShowMenu()
