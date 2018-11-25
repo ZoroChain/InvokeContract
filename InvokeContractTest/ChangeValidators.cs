@@ -11,7 +11,7 @@ namespace InvokeContractTest
     {
         public string Name => "ChangeValidators 更改应用链共识节点";
 
-        public string ID => "9";
+        public string ID => "10";
 
         public async Task StartAsync()
         {

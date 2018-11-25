@@ -50,8 +50,9 @@ namespace InvokeContractTest
             RegExample(new BalanceOfNEP5());
             RegExample(new TransferNEP5());
             RegExample(new CocurrentNEP5Transfer());
-            RegExample(new CreateAppChain());
+            RegExample(new CocurrentNEP5Transfer2());
             RegExample(new Deployment());
+            RegExample(new CreateAppChain());
             RegExample(new ChangeSeedList());
             RegExample(new ChangeValidators());
             RegExample(new LocalTest_HashSet());
