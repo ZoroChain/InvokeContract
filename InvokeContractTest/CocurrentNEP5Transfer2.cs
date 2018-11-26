@@ -207,16 +207,13 @@ namespace InvokeContractTest
                     Thread.Sleep(oneSecond - span);
                 }
 
-                if (waitingNum > lastWaiting && waitingNum > cocurrentNum)
+                if (waitingNum > cocurrentNum * 2 || pendingNum > cocurrentNum)
                 {
-                    cc = Math.Max(cc - step, 1);
+                    cc = Math.Max(cc - step, 0);
                 }
-                else if (waitingNum == 0 || (waitingNum < lastWaiting && waitingNum < cocurrentNum))
+                else if (waitingNum < cocurrentNum * 2 && pendingNum < cocurrentNum)
                 {
-                    if (cc < cocurrentNum)
-                    {
-                        cc = Math.Min(cc + step, cocurrentNum);
-                    }
+                    cc = Math.Min(cc + step, cocurrentNum);
                 }
             }
         }
