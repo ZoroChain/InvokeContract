@@ -22,4 +22,6 @@
     </None>
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties Config_1json__JSONSchema="http://json.schemastore.org/creatomic" /></VisualStudio></ProjectExtensions>
+
 </Project>

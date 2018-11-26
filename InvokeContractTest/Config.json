@@ -10,5 +10,12 @@
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
-  "transferValue": "10000"
+  "transferValue": "10000",
+
+  "NeoRpcUrl": "http://47.52.192.77:20332",
+  "ZoroBcp": "0x67147557c0b6431e9b9297de26b46d9889434e49",
+  "NeoBcp": "0x04e31cee0443bb916534dad2adf508458920e66d",
+  "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
+  "NeoBank": "0xfa5fc5036431314244e20ca0d9eae7c0e9024f41",
+  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf"
 }
