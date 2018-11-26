@@ -156,5 +156,98 @@ namespace InvokeContractTest
 
             return tran;
         }
+
+        public static ThinNeo.Transaction makeGasTran(List<Utxo> utxos, ref List<string> usedUtxoList, string targetaddr, ThinNeo.Hash256 assetid, decimal gasfee)
+        {
+            var tran = new ThinNeo.Transaction();
+            tran.type = ThinNeo.TransactionType.ContractTransaction;
+            tran.version = 0;//0 or 1
+
+            tran.attributes = new ThinNeo.Attribute[0];
+            var scraddr = "";
+            utxos.Sort((a, b) =>
+            {
+                if (a.value > b.value)
+                    return 1;
+                else if (a.value < b.value)
+                    return -1;
+                else
+                    return 0;
+            });
+            decimal count = decimal.Zero;
+            List<ThinNeo.TransactionInput> list_inputs = new List<ThinNeo.TransactionInput>();
+            for (var i = utxos.Count - 1; i >= 0; i--)
+            {
+                if (usedUtxoList.Contains(utxos[i].txid.ToString() + utxos[i].n))
+                {
+                    utxos.Remove(utxos[i]);
+                    continue;
+                }
+                ThinNeo.TransactionInput input = new ThinNeo.TransactionInput();
+                input.hash = utxos[i].txid;
+                input.index = (ushort)utxos[i].n;
+                list_inputs.Add(input);
+                count += utxos[i].value;
+                scraddr = utxos[i].addr;
+                usedUtxoList.Add(utxos[i].txid.ToString() + utxos[i].n);
+                if (count >= gasfee)
+                {
+                    break;
+                }
+            }
+            tran.inputs = list_inputs.ToArray();
+            if (count >= gasfee)//输入大于等于输出
+            {
+                List<ThinNeo.TransactionOutput> list_outputs = new List<ThinNeo.TransactionOutput>();
+                //输出
+                if (gasfee > decimal.Zero && targetaddr != null)
+                {
+                    ThinNeo.TransactionOutput output = new ThinNeo.TransactionOutput();
+                    output.assetId = assetid;
+                    output.value = gasfee;
+                    output.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetaddr);
+                    list_outputs.Add(output);
+                }
+
+                //找零
+                var change = count - gasfee;
+                if (change > decimal.Zero)
+                {
+                    var num = change;
+                    int i = 0;
+                    while (num > 3)
+                    {
+                        ThinNeo.TransactionOutput outputchange = new ThinNeo.TransactionOutput();
+                        outputchange.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(scraddr);
+                        outputchange.value = 3;
+                        outputchange.assetId = assetid;
+                        list_outputs.Add(outputchange);
+                        num -= 3;
+                        i += 1;
+                        if (i >= 10)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (num > 0)
+                    {
+                        ThinNeo.TransactionOutput outputchange = new ThinNeo.TransactionOutput();
+                        outputchange.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(scraddr);
+                        outputchange.value = num;
+                        outputchange.assetId = assetid;
+                        list_outputs.Add(outputchange);
+                    }
+
+                }
+
+                tran.outputs = list_outputs.ToArray();
+            }
+            else
+            {
+                throw new Exception("no enough money.");
+            }
+            return tran;
+        }
     }
 }

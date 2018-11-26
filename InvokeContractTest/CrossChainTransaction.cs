@@ -12,7 +12,7 @@ namespace InvokeContractTest
 {
     public class CrossChainTransaction : IExample
     {
-        public string Name => "transfer 进行一次 Neo 和 Zoro 间的交易";
+        public string Name => "transfer 进行一次 Neo 和 Zoro 间的跨链交易";
 
         public string ID => "11";
 
