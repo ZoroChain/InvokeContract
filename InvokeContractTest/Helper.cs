@@ -5,6 +5,7 @@ using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using ThinNeo;
 
 namespace InvokeContractTest
 {
@@ -176,11 +177,10 @@ namespace InvokeContractTest
             });
             decimal count = decimal.Zero;
             List<ThinNeo.TransactionInput> list_inputs = new List<ThinNeo.TransactionInput>();
-            for (var i = utxos.Count - 1; i >= 0; i--)
+            for (var i = 0; i <= utxos.Count; i++)
             {
                 if (usedUtxoList.Contains(utxos[i].txid.ToString() + utxos[i].n))
                 {
-                    utxos.Remove(utxos[i]);
                     continue;
                 }
                 ThinNeo.TransactionInput input = new ThinNeo.TransactionInput();
@@ -200,14 +200,14 @@ namespace InvokeContractTest
             {
                 List<ThinNeo.TransactionOutput> list_outputs = new List<ThinNeo.TransactionOutput>();
                 //输出
-                if (gasfee > decimal.Zero && targetaddr != null)
-                {
-                    ThinNeo.TransactionOutput output = new ThinNeo.TransactionOutput();
-                    output.assetId = assetid;
-                    output.value = gasfee;
-                    output.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetaddr);
-                    list_outputs.Add(output);
-                }
+                //if (gasfee > decimal.Zero && targetaddr != null)
+                //{
+                //    ThinNeo.TransactionOutput output = new ThinNeo.TransactionOutput();
+                //    output.assetId = assetid;
+                //    output.value = gasfee;
+                //    output.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(targetaddr);
+                //    list_outputs.Add(output);
+                //}
 
                 //找零
                 var change = count - gasfee;
@@ -215,14 +215,15 @@ namespace InvokeContractTest
                 {
                     var num = change;
                     int i = 0;
-                    while (num > 3)
+                    decimal splitvalue = (decimal)0.01;
+                    while (num > splitvalue && utxos.Count - usedUtxoList.Count < 100)
                     {
                         ThinNeo.TransactionOutput outputchange = new ThinNeo.TransactionOutput();
                         outputchange.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(scraddr);
-                        outputchange.value = 3;
+                        outputchange.value = splitvalue;
                         outputchange.assetId = assetid;
                         list_outputs.Add(outputchange);
-                        num -= 3;
+                        num -= splitvalue;
                         i += 1;
                         if (i >= 10)
                         {

@@ -6,7 +6,7 @@
     "0xe55cbd5aea7dc8b3dc6786c83a27103b0a91f378"
   ],
   "id_GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
-  "RpcUrl": "http://115.159.53.39:20332",
+  "RpcUrl": "http://127.0.0.1:20332",
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
@@ -19,6 +19,6 @@
   "NeoBcp": "0x04e31cee0443bb916534dad2adf508458920e66d",
   "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
   "NeoBank": "0xfa5fc5036431314244e20ca0d9eae7c0e9024f41",
-  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf",
-  "gasFee": 0.0001
+  "CrossAccount": "KywSeHhL1oFWVvyNYFRi8WKMErMDL9jc5r5e3CbrmN9rtiXuHE3V",
+  "gasFee": 0.000001
 }

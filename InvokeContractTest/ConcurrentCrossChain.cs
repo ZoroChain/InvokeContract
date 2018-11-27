@@ -17,26 +17,24 @@ namespace InvokeContractTest
 {
     public class ConcurrentCrossChain : IExample
     {
-        public string Name => "ManyThread 开启并发交易";
+        public string Name => "ManyThread 开启跨链并发交易";
 
         public string ID => "12";
         public string WIF { get; private set; }
         public string ContractHash { get; private set; }
-        private byte[] prikey;
-        
-        private byte[] tragetprikey;
+
         private int direction = 1;
         private string chainHash;
         public string transferValue;
         public int transNum = 0;
         private int interval = 0;
         private int stop = 0;
-        private string scriptHash;
         private string targetscripthash;
         private string api;
         private static string id_gas;
         private static List<string> usedUtxoList = new List<string>(); //本区块内同一账户已使用的 UTXO 记录
         private static int neoTransHeight = 0;
+        private Dictionary<string, List<Utxo>> dic_UTXO;
         public string ChainHash
         {
             get => chainHash;
@@ -76,10 +74,10 @@ namespace InvokeContractTest
             }
 
             stop = 0;
-            transferValue = param3;
+            transferValue = Math.Round(decimal.Parse(param3) * 100000000, 0).ToString();
             for (int i = 0; i < int.Parse(param1); i++)
             {
-                RunTestTask(param0);
+                RunTestTask();
             }
             if (transNum == 0)
             {
@@ -89,7 +87,7 @@ namespace InvokeContractTest
             }
         }
 
-        public void RunTestTask(string param0)
+        public void RunTestTask()
         {
             Task.Run(async () => { await RunTransferTask(); });
         }
@@ -110,7 +108,6 @@ namespace InvokeContractTest
             }
             else
             {
-                int i = 0;
                 while (stop == 0)
                 {
                     if (direction == 1)
@@ -175,16 +172,21 @@ namespace InvokeContractTest
             var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
             var result = await Helper.HttpPost(url, postdata);
             Console.WriteLine(result + " txid: " + txid);
+
+            if (interval > 0)
+            {
+                Thread.Sleep(interval);
+            }
         }
 
         protected async Task testNeoTransfer()
         {
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            var pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            var address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            byte[] script = null;
             using (var sb = new ThinNeo.ScriptBuilder())
             {
+                byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
+                var pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
+                var address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
+                byte[] script = null;
                 var array = new MyJson.JsonNode_Array();
                 array.AddArrayValue("(addr)" + address);
                 array.AddArrayValue("(hex160)" + targetscripthash);//NeoBank address   AMjCDmrbfcBxGPitHcdrUYRyPXD7DfC52c
@@ -201,65 +203,53 @@ namespace InvokeContractTest
                 sb.EmitPushString("transfer");//参数倒序入
                 sb.EmitAppCall(new Hash160(ContractHash));//nep5脚本
                 script = sb.ToArray();
+
+                var res = Helper.HttpGet(Config.getValue("NelRpcUrl") + "?method=getblockcount&id=1&params=[]").Result;
+                var ress = Newtonsoft.Json.Linq.JObject.Parse(res)["result"] as Newtonsoft.Json.Linq.JArray;
+                int height = (int)ress[0]["blockcount"];
+                if (height > neoTransHeight)
+                {
+                    neoTransHeight = height;
+                    usedUtxoList.Clear();
+                    dic_UTXO = Helper.GetBalanceByAddress(Config.getValue("NelRpcUrl"), address).Result;
+                }
+
+                if (dic_UTXO.ContainsKey(Config.getValue("id_GAS")) == false)
+                {
+                    Console.WriteLine("No gas");
+                }
+                Transaction tran = Helper.makeGasTran(dic_UTXO[id_gas], ref usedUtxoList, null, new ThinNeo.Hash256(id_gas), (decimal)0.000001);
+                tran.attributes = new ThinNeo.Attribute[1];
+                tran.attributes[0] = new ThinNeo.Attribute();
+                tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
+                tran.attributes[0].data = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
+                tran.version = 1;
+                tran.type = ThinNeo.TransactionType.InvocationTransaction;
+
+                var idata = new ThinNeo.InvokeTransData();
+
+                tran.extdata = idata;
+                idata.script = script;
+                idata.gas = 0;
+
+                byte[] msg = tran.GetMessage();
+                string msgstr = ThinNeo.Helper.Bytes2HexString(msg);
+                byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
+                tran.AddWitness(signdata, pubkey, address);
+                string txid = tran.GetHash().ToString();
+                byte[] data = tran.GetRawData();
+                string rawdata = ThinNeo.Helper.Bytes2HexString(data);
+
+                byte[] postdata;
+                var url = Helper.MakeRpcUrlPost(api, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+                var result = await Helper.HttpPost(url, postdata);
+                Console.WriteLine(result + " txid: " + txid);
+                if (interval > 0)
+                {
+                    Thread.Sleep(interval);
+                }
             }
-
-            if (IsClear())
-                usedUtxoList.Clear();
-            Dictionary<string, List<Utxo>> dic_UTXO =
-                await Helper.GetBalanceByAddress(Config.getValue("NelRpcUrl"), address);
-            if (dic_UTXO.ContainsKey(Config.getValue("id_GAS")) == false)
-            {
-                Console.WriteLine("No gas");
-            }
-            Transaction tran = Helper.makeGasTran(dic_UTXO[id_gas], ref usedUtxoList, null, new ThinNeo.Hash256(id_gas), decimal.Parse(Config.getValue("gasFee")));
-
-            tran.inputs = new ThinNeo.TransactionInput[0];
-            tran.outputs = new TransactionOutput[0];
-            tran.attributes = new ThinNeo.Attribute[1];
-            tran.attributes[0] = new ThinNeo.Attribute();
-            tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-            tran.attributes[0].data = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
-            tran.version = 1;
-            tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
-            var idata = new ThinNeo.InvokeTransData();
-
-            tran.extdata = idata;
-            idata.script = script;
-            idata.gas = 0;
-
-            byte[] msg = tran.GetMessage();
-            string msgstr = ThinNeo.Helper.Bytes2HexString(msg);
-            byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
-            tran.AddWitness(signdata, pubkey, address);
-            string txid = tran.GetHash().ToString();
-            byte[] data = tran.GetRawData();
-            string rawdata = ThinNeo.Helper.Bytes2HexString(data);
-
-            byte[] postdata;
-            var url = Helper.MakeRpcUrlPost(api, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-            var result = await Helper.HttpPost(url, postdata);
-            Console.WriteLine(result + " txid: " + txid);
-        }
-
-        private bool IsClear()
-        {
-            var v = GetNeoHeight();
-            if (v > neoTransHeight + 1)
-            {
-                neoTransHeight = v;
-                return true;
-            }
-            return false;
-        }
-
-        public int GetNeoHeight()
-        {
-            var url = api + "?method=getblockcount&id=1&params=[]";
-            var result = Helper.HttpGet(url).Result;
-            var res = Newtonsoft.Json.Linq.JObject.Parse(result)["result"];
-            int height = (int)res;
-            return height;
-        }
+            
+        }        
     }
 }
