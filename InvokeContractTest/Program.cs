@@ -56,6 +56,8 @@ namespace InvokeContractTest
             RegExample(new ChangeSeedList());
             RegExample(new ChangeValidators());
             RegExample(new LocalTest_HashSet());
+            RegExample(new CrossChainTransaction());
+            RegExample(new ConcurrentCrossChain());
         }
 
         static void ShowMenu()
