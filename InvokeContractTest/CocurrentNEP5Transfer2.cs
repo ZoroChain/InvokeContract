@@ -35,7 +35,7 @@ namespace InvokeContractTest
         private int transNum = 0;
         private int stop = 0;
 
-        protected async Task nep5Transfer(int idx, string chainHash)
+        protected async void nep5Transfer(int idx, string chainHash)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -89,7 +89,14 @@ namespace InvokeContractTest
                 //int tid = Thread.CurrentThread.ManagedThreadId;
                 //Console.WriteLine($"sendrawtransaction {idx}, tid:{tid}");
 
-                var result = await Helper.HttpPost(url, postdata);
+                try
+                {
+                    var result = await Helper.HttpPost(url, postdata);
+                }
+                catch (Exception)
+                {
+
+                }
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
             }
@@ -161,7 +168,7 @@ namespace InvokeContractTest
             {
                 if (transNum > 0)
                 {
-                    if (total >= transNum)
+                    if (total >= transNum && pendingNum == 0 && waitingNum == 0)
                         break;
 
                     cc = Math.Min(transNum - total, cc);
@@ -179,7 +186,7 @@ namespace InvokeContractTest
                 for (int i = 0; i < cc; i++)
                 {
                     int j = i;
-                    Task.Run(async () =>
+                    Task.Run(() =>
                     {
                         int index = rd.Next(0, chainNum);
                         string chainHash = ChainHashList[index];
@@ -189,7 +196,7 @@ namespace InvokeContractTest
 
                         try
                         {
-                            await nep5Transfer(j, chainHash);
+                            nep5Transfer(j, chainHash);
                         }
                         catch(Exception)
                         {
