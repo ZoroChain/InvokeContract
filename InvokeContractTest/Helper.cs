@@ -66,11 +66,12 @@ namespace InvokeContractTest
             return sb.ToString();
         }
 
-        public static async Task<Dictionary<string, List<Utxo>>> GetBalanceByAddress(string api, string _addr)
+        public static Dictionary<string, List<Utxo>> GetBalanceByAddress(string api, string _addr, ref Dictionary<string, string> usedUtxoDic)
         {
-            MyJson.JsonNode_Object response = (MyJson.JsonNode_Object)MyJson.Parse(await Helper.HttpGet(api + "?method=getutxo&id=1&params=['" + _addr + "']"));
+            MyJson.JsonNode_Object response = (MyJson.JsonNode_Object)MyJson.Parse(Helper.HttpGet(api + "?method=getutxo&id=1&params=['" + _addr + "']").Result);
             MyJson.JsonNode_Array resJA = (MyJson.JsonNode_Array)response["result"];
             Dictionary<string, List<Utxo>> _dir = new Dictionary<string, List<Utxo>>();
+            List<string> usedList = new List<string>(usedUtxoDic.Keys);
             foreach (MyJson.JsonNode_Object j in resJA)
             {
                 Utxo utxo = new Utxo(j["addr"].ToString(), new ThinNeo.Hash256(j["txid"].ToString()), j["asset"].ToString(), decimal.Parse(j["value"].ToString()), int.Parse(j["n"].ToString()));
@@ -83,6 +84,15 @@ namespace InvokeContractTest
                     List<Utxo> l = new List<Utxo>();
                     l.Add(utxo);
                     _dir[j["asset"].ToString()] = l;
+                }
+
+                for (int i = usedList.Count - 1; i >= 0; i--)
+                {
+                    if (usedUtxoDic[usedList[i]] == utxo.txid.ToString())
+                    {
+                        usedUtxoDic.Remove(usedList[i]);
+                        usedList.Remove(usedList[i]);
+                    }
                 }
             }
             return _dir;
@@ -158,7 +168,7 @@ namespace InvokeContractTest
             return tran;
         }
 
-        public static ThinNeo.Transaction makeGasTran(List<Utxo> utxos, ref List<string> usedUtxoList, string targetaddr, ThinNeo.Hash256 assetid, decimal gasfee)
+        public static ThinNeo.Transaction makeGasTran(ref List<Utxo> list_Gas, Dictionary<string, string> usedUtxoDic, Hash256 assetid, decimal gasfee)
         {
             var tran = new ThinNeo.Transaction();
             tran.type = ThinNeo.TransactionType.ContractTransaction;
@@ -166,35 +176,25 @@ namespace InvokeContractTest
 
             tran.attributes = new ThinNeo.Attribute[0];
             var scraddr = "";
-            utxos.Sort((a, b) =>
-            {
-                if (a.value > b.value)
-                    return 1;
-                else if (a.value < b.value)
-                    return -1;
-                else
-                    return 0;
-            });
+
             decimal count = decimal.Zero;
             List<ThinNeo.TransactionInput> list_inputs = new List<ThinNeo.TransactionInput>();
-            for (var i = 0; i <= utxos.Count; i++)
+            for (var i = list_Gas.Count - 1; i >= 0; i--)
             {
-                if (usedUtxoList.Contains(utxos[i].txid.ToString() + utxos[i].n))
-                {
+                if (usedUtxoDic.ContainsKey(list_Gas[i].txid.ToString() + list_Gas[i].n))
                     continue;
-                }
+
                 ThinNeo.TransactionInput input = new ThinNeo.TransactionInput();
-                input.hash = utxos[i].txid;
-                input.index = (ushort)utxos[i].n;
+                input.hash = list_Gas[i].txid;
+                input.index = (ushort)list_Gas[i].n;
                 list_inputs.Add(input);
-                count += utxos[i].value;
-                scraddr = utxos[i].addr;
-                usedUtxoList.Add(utxos[i].txid.ToString() + utxos[i].n);
+                count += list_Gas[i].value;
+                scraddr = list_Gas[i].addr;
+                list_Gas.Remove(list_Gas[i]);
                 if (count >= gasfee)
-                {
                     break;
-                }
             }
+
             tran.inputs = list_inputs.ToArray();
             if (count >= gasfee)//输入大于等于输出
             {
@@ -213,29 +213,28 @@ namespace InvokeContractTest
                 var change = count - gasfee;
                 if (change > decimal.Zero)
                 {
-                    var num = change;
-                    int i = 0;
                     decimal splitvalue = (decimal)0.01;
-                    while (num > splitvalue && utxos.Count - usedUtxoList.Count < 100)
+                    int i = 0;
+                    while (change > splitvalue && list_Gas.Count - 10 < usedUtxoDic.Count)
                     {
                         ThinNeo.TransactionOutput outputchange = new ThinNeo.TransactionOutput();
                         outputchange.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(scraddr);
                         outputchange.value = splitvalue;
                         outputchange.assetId = assetid;
                         list_outputs.Add(outputchange);
-                        num -= splitvalue;
+                        change -= splitvalue;
                         i += 1;
-                        if (i >= 10)
+                        if (i > 50)
                         {
                             break;
                         }
                     }
 
-                    if (num > 0)
+                    if (change > 0)
                     {
                         ThinNeo.TransactionOutput outputchange = new ThinNeo.TransactionOutput();
                         outputchange.toAddress = ThinNeo.Helper.GetPublicKeyHashFromAddress(scraddr);
-                        outputchange.value = num;
+                        outputchange.value = change;
                         outputchange.assetId = assetid;
                         list_outputs.Add(outputchange);
                     }

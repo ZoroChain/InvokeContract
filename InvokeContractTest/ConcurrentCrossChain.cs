@@ -34,12 +34,15 @@ namespace InvokeContractTest
         private static string id_gas;
         private static List<string> usedUtxoList = new List<string>(); //本区块内同一账户已使用的 UTXO 记录
         private static int neoTransHeight = 0;
-        private Dictionary<string, List<Utxo>> dic_UTXO;
         public string ChainHash
         {
             get => chainHash;
             set => chainHash = value;
         }
+
+        private static Dictionary<string, string> usedUtxoDic = new Dictionary<string, string>();
+        private static Dictionary<string, List<Utxo>> dic_UTXO = new Dictionary<string, List<Utxo>>();
+        private static List<Utxo> list_Gas = new List<Utxo>();
 
         public async Task StartAsync()
         {
@@ -179,7 +182,7 @@ namespace InvokeContractTest
             }
         }
 
-        protected async Task testNeoTransfer()
+        private async Task testNeoTransfer()
         {
             using (var sb = new ThinNeo.ScriptBuilder())
             {
@@ -204,41 +207,33 @@ namespace InvokeContractTest
                 sb.EmitAppCall(new Hash160(ContractHash));//nep5脚本
                 script = sb.ToArray();
 
-                var res = Helper.HttpGet(Config.getValue("NelRpcUrl") + "?method=getblockcount&id=1&params=[]").Result;
-                var ress = Newtonsoft.Json.Linq.JObject.Parse(res)["result"] as Newtonsoft.Json.Linq.JArray;
-                int height = (int)ress[0]["blockcount"];
-                if (height > neoTransHeight)
+                if (dic_UTXO.ContainsKey(id_gas) == false || list_Gas.Count - 10 < usedUtxoDic.Count)
                 {
-                    neoTransHeight = height;
-                    usedUtxoList.Clear();
-                    dic_UTXO = Helper.GetBalanceByAddress(Config.getValue("NelRpcUrl"), address).Result;
+                    dic_UTXO = Helper.GetBalanceByAddress(api, address, ref usedUtxoDic);
                 }
 
-                if (dic_UTXO.ContainsKey(Config.getValue("id_GAS")) == false)
+                if (dic_UTXO.ContainsKey(id_gas) == false)
                 {
-                    Console.WriteLine("No gas");
+                    throw new Exception("no gas.");
                 }
-                Transaction tran = Helper.makeGasTran(dic_UTXO[id_gas], ref usedUtxoList, null, new ThinNeo.Hash256(id_gas), (decimal)0.000001);
-                tran.attributes = new ThinNeo.Attribute[1];
-                tran.attributes[0] = new ThinNeo.Attribute();
-                tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-                tran.attributes[0].data = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
-                tran.version = 1;
+                list_Gas = dic_UTXO[id_gas];
+                Transaction tran = Helper.makeGasTran(ref list_Gas, usedUtxoDic, new ThinNeo.Hash256(id_gas), (decimal)0.001);
+
                 tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
                 var idata = new ThinNeo.InvokeTransData();
-
                 tran.extdata = idata;
                 idata.script = script;
                 idata.gas = 0;
 
-                byte[] msg = tran.GetMessage();
-                string msgstr = ThinNeo.Helper.Bytes2HexString(msg);
-                byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
+                var signdata = ThinNeo.Helper.Sign(tran.GetMessage(), prikey);
                 tran.AddWitness(signdata, pubkey, address);
-                string txid = tran.GetHash().ToString();
-                byte[] data = tran.GetRawData();
-                string rawdata = ThinNeo.Helper.Bytes2HexString(data);
+                var trandata = tran.GetRawData();
+                var rawdata = ThinNeo.Helper.Bytes2HexString(trandata);
+                var txid = tran.GetHash().ToString();
+                foreach (var item in tran.inputs)
+                {
+                    usedUtxoDic[((Hash256)item.hash).ToString() + item.index] = txid;
+                }
 
                 byte[] postdata;
                 var url = Helper.MakeRpcUrlPost(api, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
