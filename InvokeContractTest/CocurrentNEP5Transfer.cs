@@ -91,9 +91,16 @@ namespace InvokeContractTest
                 int tid = System.Threading.Thread.CurrentThread.ManagedThreadId;
                 Console.WriteLine(tid + " " + idx + ": " + "sendrawtransaction " + transferValue + " chain " + chainIdx);
 
-                var result = await Helper.HttpPost(url, postdata);
-                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
-                Console.WriteLine(resJO.ToString());
+                try
+                {
+                    var result = await Helper.HttpPost(url, postdata);
+                    MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                    //Console.WriteLine(resJO.ToString());
+                }
+                catch (Exception)
+                {
+
+                }
 
                 if (interval > 0)
                 {
@@ -102,7 +109,7 @@ namespace InvokeContractTest
             }
         }
 
-        public async Task RunTransferTask()
+        public async void RunTransferTask()
         {
             Random rd = new Random();
 
@@ -174,7 +181,7 @@ namespace InvokeContractTest
 
         public void RunTestTask()
         {
-            Task.Run(async () => { await RunTransferTask(); });
+            Task.Run(() => { RunTransferTask(); });
         }
     }
 }
