@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
-using Zoro.IO;
-using Zoro.Ledger;
-using Zoro.Network.P2P.Payloads;
+using Zoro.Cryptography.ECC;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -25,10 +20,10 @@ namespace InvokeContractTest
         public string[] ChainHashList { get; private set; }
 
         private byte[] prikey;
-        private Zoro.Cryptography.ECC.ECPoint pubkey;
+        private ECPoint pubkey;
         private UInt160 scriptHash;
         private byte[] tragetprikey;
-        private Zoro.Cryptography.ECC.ECPoint targetpubkey;
+        private ECPoint targetpubkey;
         private UInt160 targetscripthash;
         public string transferValue;
         public int transNum = 0;
@@ -41,66 +36,16 @@ namespace InvokeContractTest
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-                byte[] randomBytes = new byte[32];
-                using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(randomBytes);
-                }
-                BigInteger randomNum = new BigInteger(randomBytes);
-                sb.EmitPush(randomNum);
-                sb.EmitPush(Neo.VM.OpCode.DROP);
+                ZoroHelper.PushRandomBytes(sb);
+
                 sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                InvocationTransaction tx = new InvocationTransaction
-                {
-                    ChainHash = ZoroHelper.Parse(chainHash),
-                    Version = 1,
-                    Script = sb.ToArray(),
-                    Gas = Fixed8.Zero,
-                };
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, chainHash);
+                //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                //Console.WriteLine(resJO.ToString());
 
-                tx.Inputs = new CoinReference[0];
-                tx.Outputs = new TransactionOutput[0];
-
-                tx.Attributes = new TransactionAttribute[1];
-                tx.Attributes[0] = new TransactionAttribute();
-                tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
-                tx.Attributes[0].Data = scriptHash.ToArray();
-
-                byte[] data = ZoroHelper.GetHashData(tx);
-                byte[] signdata = ZoroHelper.Sign(data, prikey, pubkey);
-                ZoroHelper.AddWitness(tx, signdata, pubkey);
-                string rawdata = ThinNeo.Helper.Bytes2HexString(tx.ToArray());
-
-                string url;
-                byte[] postdata;
-                if (Program.ChainID == "Zoro")
-                {
-                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                    postRawArray.AddArrayValue(chainHash);
-                    postRawArray.AddArrayValue(rawdata);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                }
-                else
-                {
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-                }
-
-                int tid = System.Threading.Thread.CurrentThread.ManagedThreadId;
+                int tid = Thread.CurrentThread.ManagedThreadId;
                 Console.WriteLine(tid + " " + idx + ": " + "sendrawtransaction " + transferValue + " chain " + chainIdx);
-
-                try
-                {
-                    var result = await Helper.HttpPost(url, postdata);
-                    MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
-                    //Console.WriteLine(resJO.ToString());
-                }
-                catch (Exception)
-                {
-
-                }
 
                 if (interval > 0)
                 {

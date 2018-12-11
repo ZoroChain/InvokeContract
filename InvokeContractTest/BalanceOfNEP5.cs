@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using ThinNeo;
+using Zoro;
+using Zoro.Cryptography.ECC;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
@@ -12,56 +12,39 @@ namespace InvokeContractTest
 
         public string ID => "3";
 
-        public string WIF { get; private set; }
-        public string ContractHash { get; private set; }
-        public string[] ChainHashList { get; private set; }
-
         public async Task StartAsync()
         {
-            ChainHashList = Config.getStringArray("ChainHashList");
-            WIF = Config.getValue("WIF");
-            ContractHash = Config.getValue("ContractHash");
+            string[] ChainHashList = Config.getStringArray("ChainHashList");
+            string WIF = Config.getValue("WIF");
+            string ContractHash = Config.getValue("ContractHash");
 
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            var scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
+            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
+            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
+            UInt160 account = ZoroHelper.GetPublicKeyHash(pubkey);
 
-            ScriptBuilder sb = new ScriptBuilder();
-            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-            array.AddArrayValue("(addr)" + address);
-            sb.EmitParamJson(array);
-            sb.EmitPushString("balanceOf");
-            sb.EmitAppCall(new Hash160(ContractHash));
-
-            Console.WriteLine($"Address: {WIF.ToString()}");
-
-            string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
-            string url;
-            byte[] postdata;
-            if (ChainHashList.Length > 0)
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
-                foreach (var chainHash in ChainHashList)
+                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "balanceOf", account);
+
+                if (Program.ChainID == "Zoro")
                 {
-                    MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                    postArray.AddArrayValue(chainHash);
-                    postArray.AddArrayValue(scriptPublish);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
-                    await BalanceOf(chainHash, url, postdata);
+                    foreach (var chainHash in ChainHashList)
+                    {
+                        var result = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                        PrintBalance(result, chainHash);
+                    }
                 }
-            }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
-                await BalanceOf("", url, postdata);
+                else
+                {
+                    string chainHash = UInt160.Zero.ToString();
+                    var result = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                    PrintBalance(result, chainHash);
+                }
             }
         }
 
-        async Task BalanceOf(string chainHash, string url, byte[] postdata)
+        void PrintBalance(string result, string chainHash)
         {
-            var result = await Helper.HttpPost(url, postdata);
-
             MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
 
             if (json_result_array.ContainsKey("result"))

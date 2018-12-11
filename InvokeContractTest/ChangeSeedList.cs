@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Numerics;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using ThinNeo;
 using Zoro;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
@@ -58,62 +56,24 @@ namespace InvokeContractTest
                 seedList[i] = Console.ReadLine();
             }
 
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            Hash160 scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
-            UInt160 chainHash = UInt160.Parse(appchainHash);
+            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
+            Zoro.Cryptography.ECC.ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
 
-            ScriptBuilder sb = new ScriptBuilder();
-            byte[] randomBytes = new byte[32];
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
-                rng.GetBytes(randomBytes);
+                ZoroHelper.PushRandomBytes(sb);
+
+                foreach (string seed in seedList)
+                {
+                    sb.EmitPush(seed);
+                }
+                sb.EmitPush(seedList.Length);
+                sb.EmitSysCall("Zoro.AppChain.ChangeSeedList");
+
+                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, appchainHash);
+                Console.WriteLine(result);
             }
-            BigInteger randomNum = new BigInteger(randomBytes);
-            sb.EmitPushNumber(randomNum);
-            sb.Emit(ThinNeo.VM.OpCode.DROP);
-            foreach (string seed in seedList)
-            {
-                sb.EmitPushString(seed);
-            }
-            sb.EmitPushNumber(seedList.Length);
-            sb.EmitSysCall("Zoro.AppChain.ChangeSeedList");
-            
-            string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
-
-            ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
-            extdata.script = sb.ToArray();
-
-            //extdata.gas = Math.Ceiling(gas_consumed - 10);
-            extdata.gas = 0;
-
-            ThinNeo.Transaction tran = Helper.makeTran(null, null, new ThinNeo.Hash256(Program.id_GAS), extdata.gas);
-            tran.version = 1;
-            tran.extdata = extdata;
-            tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
-            //附加鉴证
-            tran.attributes = new ThinNeo.Attribute[1];
-            tran.attributes[0] = new ThinNeo.Attribute();
-            tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-            tran.attributes[0].data = scripthash;
-
-            byte[] msg = tran.GetMessage();
-            byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
-            tran.AddWitness(signdata, pubkey, address);
-            string txid = tran.GetHash().ToString();
-            byte[] data = tran.GetRawData();
-            string rawdata = ThinNeo.Helper.Bytes2HexString(data);
-
-            MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-            postRawArray.AddArrayValue(appchainHash);
-            postRawArray.AddArrayValue(rawdata);
-
-            byte[] postdata;
-            url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-            result = await Helper.HttpPost(url, postdata);
-            Console.WriteLine(result);
         }
     }
 }

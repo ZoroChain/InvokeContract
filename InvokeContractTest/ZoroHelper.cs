@@ -1,4 +1,5 @@
 ﻿using Zoro;
+using Zoro.IO;
 using Zoro.Wallets;
 using Zoro.SmartContract;
 using Zoro.Cryptography;
@@ -7,7 +8,10 @@ using Zoro.Network.P2P.Payloads;
 using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
@@ -101,6 +105,137 @@ namespace InvokeContractTest
 
             wit.Add(newwit);
             tx.Witnesses = wit.ToArray();
+        }
+
+        public static byte[] HexString2Bytes(string str)
+        {
+            if (str.IndexOf("0x") == 0)
+                str = str.Substring(2);
+            byte[] outd = new byte[str.Length / 2];
+            for (var i = 0; i < str.Length / 2; i++)
+            {
+                outd[i] = byte.Parse(str.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
+            }
+            return outd;
+        }
+
+        public static void PushRandomBytes(ScriptBuilder sb, int count = 32)
+        {
+            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
+            byte[] randomBytes = new byte[count];
+            using (System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
+            BigInteger randomNum = new BigInteger(randomBytes);
+            sb.EmitPush(randomNum);
+            sb.EmitPush(Neo.VM.OpCode.DROP);
+        }
+
+        public static InvocationTransaction MakeTransaction(byte[] script, UInt160 verifyScriptHash, byte[] prikey, ECPoint pubkey)
+        {
+            InvocationTransaction tx = new InvocationTransaction
+            {
+                ChainHash = UInt160.Zero,
+                Version = 1,
+                Script = script,
+                Gas = Fixed8.Zero,
+            };
+
+            tx.Attributes = new TransactionAttribute[1];
+            tx.Attributes[0] = new TransactionAttribute();
+            tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
+            tx.Attributes[0].Data = verifyScriptHash.ToArray();
+
+            byte[] data = GetHashData(tx);
+            byte[] signdata = Sign(data, prikey, pubkey);
+            AddWitness(tx, signdata, pubkey);
+
+            return tx;
+        }
+
+        public static string GetTransactionRawData(InvocationTransaction tx)
+        {
+            return tx.ToArray().ToHexString();
+        }
+
+        public static async Task<string> SendRawTransaction(string appchainHash, string rawdata)
+        {
+            MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+            postRawArray.AddArrayValue(appchainHash);
+            postRawArray.AddArrayValue(rawdata);
+
+            byte[] postdata;
+            var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+            string result = await Helper.HttpPost(url, postdata);
+            return result;
+        }
+
+        public static async Task<string> SendRawTransaction(byte[] script, UInt160 verifyScriptHash, byte[] prikey, ECPoint pubkey, string chainHash)
+        {
+            InvocationTransaction tx = MakeTransaction(script, verifyScriptHash, prikey, pubkey);
+
+            string rawdata = tx.ToArray().ToHexString();
+
+            string url;
+            byte[] postdata;
+
+            if (Program.ChainID == "Zoro")
+            {
+                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                postRawArray.AddArrayValue(chainHash);
+                postRawArray.AddArrayValue(rawdata);
+
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+            }
+            else
+            {
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+            }
+
+            string result = "";
+            try
+            {
+                result = await Helper.HttpPost(url, postdata);
+                
+            }
+            catch (Exception)
+            {
+            }
+
+            return result;
+        }
+
+        public static async Task<string> InvokeScript(byte[] script, string chainHash)
+        {
+            string scriptPublish = script.ToHexString();
+
+            byte[] postdata;
+            string url;
+            if (Program.ChainID == "Zoro")
+            {
+                MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
+                postArray.AddArrayValue(chainHash);
+                postArray.AddArrayValue(scriptPublish);
+
+                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
+            }
+            else
+            {
+                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
+            }
+
+            string result = "";
+            try
+            {
+                result = await Helper.HttpPost(url, postdata);
+
+            }
+            catch (Exception)
+            {
+            }
+
+            return result;
         }
     }
 }

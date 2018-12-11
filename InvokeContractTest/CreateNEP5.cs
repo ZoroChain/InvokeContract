@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using ThinNeo;
+using Zoro;
+using Zoro.SmartContract;
+using Zoro.Cryptography.ECC;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
@@ -13,41 +13,25 @@ namespace InvokeContractTest
 
         public string ID => "0";
 
-        private string chainHash;
-        private string wif;
-        private string contractPath;
-        public string ChainHash { get => chainHash; set => chainHash = value; }
-        public string WIF { get => wif; set => wif = value; }
-        public string ContractPath { get => contractPath; set => contractPath = value; }
-
         public async Task StartAsync()
         {
-            //Console.WriteLine("Params:ChainHash,WIF,ContractPath");
-            //var param = Console.ReadLine();
-            //string[] messages = param.Split(",");
-            //Console.WriteLine("ChainHash:{0}, WIF:{1}, ContractPath:{2}", messages[0], messages[1], messages[2]);
-            //ChainHash = messages[0];
-            //WIF = messages[1];
-            //ContractPath = messages[2];
-            ChainHash = Config.getValue("ChainHash");
-            WIF = Config.getValue("WIF");
-            ContractPath = Config.getValue("ContractPath");
+            string ChainHash = Config.getValue("ChainHash");
+            string WIF = Config.getValue("WIF");
+            string ContractPath = Config.getValue("ContractPath");
 
             await CreateNep5Async(ChainHash, WIF, ContractPath);
         }
 
         public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath)
         {
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            Hash160 scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
+            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
+            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
 
             byte[] script = System.IO.File.ReadAllBytes(ContractPath);
-            //Console.WriteLine("合约脚本：" + ThinNeo.Helper.Bytes2HexString(script));
-            Console.WriteLine("合约脚本Hash：" + ThinNeo.Helper.Bytes2HexString(ThinNeo.Helper.GetScriptHashFromScript(script).data.ToArray().Reverse().ToArray()));
-            byte[] parameter__list = ThinNeo.Helper.HexString2Bytes("0710");
-            byte[] return_type = ThinNeo.Helper.HexString2Bytes("05");
+            Console.WriteLine("合约脚本Hash：" + script.ToScriptHash().ToArray().ToHexString());
+            byte[] parameter__list = ZoroHelper.HexString2Bytes("0710");
+            byte[] return_type = ZoroHelper.HexString2Bytes("05");
             int need_storage = 1;
             int need_nep4 = 0;
             int need_canCharge = 4;
@@ -56,21 +40,21 @@ namespace InvokeContractTest
             string auther = "LZ";
             string email = "0";
             string description = "0";
-            using (ThinNeo.ScriptBuilder sb = new ThinNeo.ScriptBuilder())
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
                 var ss = need_storage | need_nep4 | need_canCharge;
-                sb.EmitPushString(description);
-                sb.EmitPushString(email);
-                sb.EmitPushString(auther);
-                sb.EmitPushString(version);
-                sb.EmitPushString(name);
-                sb.EmitPushNumber(ss);
-                sb.EmitPushBytes(return_type);
-                sb.EmitPushBytes(parameter__list);
-                sb.EmitPushBytes(script);
+                sb.EmitPush(description);
+                sb.EmitPush(email);
+                sb.EmitPush(auther);
+                sb.EmitPush(version);
+                sb.EmitPush(name);
+                sb.EmitPush(ss);
+                sb.EmitPush(return_type);
+                sb.EmitPush(parameter__list);
+                sb.EmitPush(script);
                 sb.EmitSysCall("Neo.Contract.Create");
 
-                string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
+                string scriptPublish = sb.ToArray().ToHexString();
 
                 byte[] postdata;
                 string url;
@@ -96,44 +80,7 @@ namespace InvokeContractTest
 
                 decimal gas_consumed = decimal.Parse(consume);
 
-                ThinNeo.InvokeTransData extdata = new ThinNeo.InvokeTransData();
-                extdata.script = sb.ToArray();
-
-                //extdata.gas = Math.Ceiling(gas_consumed);
-                extdata.gas = 0;
-
-                ThinNeo.Transaction tran = Helper.makeTran(null, null, new ThinNeo.Hash256(Program.id_GAS), extdata.gas);
-                tran.version = 1;
-                tran.extdata = extdata;
-                tran.type = ThinNeo.TransactionType.InvocationTransaction;
-
-                //附加鉴证
-                tran.attributes = new ThinNeo.Attribute[1];
-                tran.attributes[0] = new ThinNeo.Attribute();
-                tran.attributes[0].usage = ThinNeo.TransactionAttributeUsage.Script;
-                tran.attributes[0].data = scripthash;
-
-                byte[] msg = tran.GetMessage();
-                byte[] signdata = ThinNeo.Helper.Sign(msg, prikey);
-                tran.AddWitness(signdata, pubkey, address);
-                string txid = tran.GetHash().ToString();
-                byte[] data = tran.GetRawData();
-                string rawdata = ThinNeo.Helper.Bytes2HexString(data);
-
-                if (Program.ChainID == "Zoro")
-                {
-                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                    postRawArray.AddArrayValue(ChainHash);
-                    postRawArray.AddArrayValue(rawdata);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                    result = await Helper.HttpPost(url, postdata);
-                }
-                else
-                {
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-                    result = await Helper.HttpPost(url, postdata);
-                }
+                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, ChainHash);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

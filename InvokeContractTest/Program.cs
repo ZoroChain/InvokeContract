@@ -1,17 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Numerics;
-using System.Globalization;
-using ThinNeo;
-using Zoro;
-using Zoro.Cryptography;
-using Zoro.Ledger;
-using Zoro.Network.P2P.Payloads;
-using Zoro.SmartContract;
-using Zoro.Wallets;
-using System.Threading;
 
 namespace InvokeContractTest
 {
