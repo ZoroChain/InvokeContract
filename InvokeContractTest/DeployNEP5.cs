@@ -1,7 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Zoro;
-using Zoro.Network.P2P.Payloads;
-using Zoro.Cryptography.ECC;
+using Zoro.Wallets;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -23,15 +21,13 @@ namespace InvokeContractTest
 
         public async Task DeployNEP5Async(string ChainHash, string WIF, string ContractHash) {
 
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "deploy", "1");
 
-                await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, ChainHash);
+                await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, ChainHash);
             }
         }
     }

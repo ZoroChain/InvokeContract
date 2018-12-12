@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Zoro;
+using Zoro.Wallets;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -56,9 +56,7 @@ namespace InvokeContractTest
                 validators[i] = Console.ReadLine();
             }
 
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            Zoro.Cryptography.ECC.ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -71,7 +69,7 @@ namespace InvokeContractTest
                 sb.EmitPush(validators.Length);
                 sb.EmitSysCall("Zoro.AppChain.ChangeValidators");
 
-                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, appchainHash);
+                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, appchainHash);
                 Console.WriteLine(result);
             }
                 

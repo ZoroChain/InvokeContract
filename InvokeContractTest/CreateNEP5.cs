@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Zoro;
+using Zoro.Wallets;
 using Zoro.SmartContract;
-using Zoro.Cryptography.ECC;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -24,9 +24,7 @@ namespace InvokeContractTest
 
         public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath)
         {
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             byte[] script = System.IO.File.ReadAllBytes(ContractPath);
             Console.WriteLine("合约脚本Hash：" + script.ToScriptHash().ToArray().ToHexString());
@@ -80,7 +78,7 @@ namespace InvokeContractTest
 
                 decimal gas_consumed = decimal.Parse(consume);
 
-                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, ChainHash);
+                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, ChainHash);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

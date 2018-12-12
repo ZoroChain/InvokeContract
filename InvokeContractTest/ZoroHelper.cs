@@ -26,6 +26,13 @@ namespace InvokeContractTest
             return new UInt160(value.HexToBytes().Reverse().ToArray());
         }
 
+        public static KeyPair GetKeyPairFromWIF(string wif)
+        {
+            byte[] prikey = Wallet.GetPrivateKeyFromWIF(wif);
+            KeyPair keypair = new KeyPair(prikey);
+            return keypair;
+        }
+
         public static byte[] GetPrivateKeyFromWIF(string wif)
         {
             byte[] prikey = Wallet.GetPrivateKeyFromWIF(wif);
@@ -42,6 +49,13 @@ namespace InvokeContractTest
         {
             UInt160 script_hash = Contract.CreateSignatureRedeemScript(pubkey).ToScriptHash();
             return script_hash;
+        }
+
+        public static UInt160 GetPublicKeyHashFromWIF(string WIF)
+        {
+            byte[] prikey = GetPrivateKeyFromWIF(WIF);
+            ECPoint pubkey = GetPublicKeyFromPrivateKey(prikey);
+            return GetPublicKeyHash(pubkey);
         }
 
         public static byte[] Sign(byte[] data, byte[] prikey, ECPoint pubkey)
@@ -132,24 +146,23 @@ namespace InvokeContractTest
             sb.EmitPush(Neo.VM.OpCode.DROP);
         }
 
-        public static InvocationTransaction MakeTransaction(byte[] script, UInt160 verifyScriptHash, byte[] prikey, ECPoint pubkey)
+        public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair)
         {
             InvocationTransaction tx = new InvocationTransaction
             {
                 ChainHash = UInt160.Zero,
-                Version = 1,
                 Script = script,
-                Gas = Fixed8.Zero,
+                GasLimit = Fixed8.Zero,
             };
 
             tx.Attributes = new TransactionAttribute[1];
             tx.Attributes[0] = new TransactionAttribute();
             tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
-            tx.Attributes[0].Data = verifyScriptHash.ToArray();
+            tx.Attributes[0].Data = Contract.CreateSignatureRedeemScript(keypair.PublicKey).ToScriptHash().ToArray();
 
             byte[] data = GetHashData(tx);
-            byte[] signdata = Sign(data, prikey, pubkey);
-            AddWitness(tx, signdata, pubkey);
+            byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
+            AddWitness(tx, signdata, keypair.PublicKey);
 
             return tx;
         }
@@ -171,9 +184,9 @@ namespace InvokeContractTest
             return result;
         }
 
-        public static async Task<string> SendRawTransaction(byte[] script, UInt160 verifyScriptHash, byte[] prikey, ECPoint pubkey, string chainHash)
+        public static async Task<string> SendRawTransaction(byte[] script, KeyPair keypair, string chainHash)
         {
-            InvocationTransaction tx = MakeTransaction(script, verifyScriptHash, prikey, pubkey);
+            InvocationTransaction tx = MakeTransaction(script, keypair);
 
             string rawdata = tx.ToArray().ToHexString();
 

@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
-using Zoro.Cryptography.ECC;
+using Zoro.Wallets;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -15,15 +15,12 @@ namespace InvokeContractTest
         public string ID => "5";
 
         public string WIF { get; private set; }
-        public string targetWIF { get; private set; }
+        public string TargetWIF { get; private set; }
         public string ContractHash { get; private set; }
         public string[] ChainHashList { get; private set; }
 
-        private byte[] prikey;
-        private ECPoint pubkey;
+        private KeyPair keypair;
         private UInt160 scriptHash;
-        private byte[] tragetprikey;
-        private ECPoint targetpubkey;
         private UInt160 targetscripthash;
         public string transferValue;
         public int transNum = 0;
@@ -40,7 +37,7 @@ namespace InvokeContractTest
 
                 sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, chainHash);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash);
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
 
@@ -94,20 +91,16 @@ namespace InvokeContractTest
 
             ChainHashList = Config.getStringArray("ChainHashList");
             WIF = Config.getValue("WIF");
-            targetWIF = Config.getValue("targetWIF");
+            TargetWIF = Config.getValue("targetWIF");
             ContractHash = Config.getValue("ContractHash");
             transferValue = param3;// Config.getValue("transferValue");
 
             Console.WriteLine(WIF.ToString());
-            Console.WriteLine(targetWIF.ToString());
+            Console.WriteLine(TargetWIF.ToString());
 
-            prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
-
-            tragetprikey = ZoroHelper.GetPrivateKeyFromWIF(targetWIF);
-            targetpubkey = ZoroHelper.GetPublicKeyFromPrivateKey(tragetprikey);
-            targetscripthash = ZoroHelper.GetPublicKeyHash(targetpubkey);
+            keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+            scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
+            targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(TargetWIF);
 
             stop = 0;
 

@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Threading.Tasks;
 using Zoro;
-using Zoro.Cryptography.ECC;
+using Zoro.Wallets;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -26,13 +26,10 @@ namespace InvokeContractTest
 
         public async Task TransferNEP5Async(string chainHash, string WIF, string targetWIF, string contractHash, string transferValue) {
 
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
 
-            byte[] tragetprikey = ZoroHelper.GetPrivateKeyFromWIF(targetWIF);
-            ECPoint targetpubkey = ZoroHelper.GetPublicKeyFromPrivateKey(tragetprikey);
-            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHash(targetpubkey);
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
             Console.WriteLine($"From:{WIF.ToString()}");
             Console.WriteLine($"To:{targetWIF.ToString()}");
@@ -44,7 +41,7 @@ namespace InvokeContractTest
 
                 sb.EmitAppCall(ZoroHelper.Parse(contractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, chainHash);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

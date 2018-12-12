@@ -2,9 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Zoro;
-using Zoro.Network.P2P.Payloads;
+using Zoro.Wallets;
 using Zoro.Cryptography;
-using Zoro.Cryptography.ECC;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -36,9 +35,7 @@ namespace InvokeContractTest
                 seedList[i] = Console.ReadLine();
             }
 
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -53,7 +50,7 @@ namespace InvokeContractTest
                 }
                 sb.EmitPush(seedList.Length);
                 sb.EmitPush(DateTime.UtcNow.ToTimestamp());
-                sb.EmitPush(pubkey.EncodePoint(true));
+                sb.EmitPush(keypair.PublicKey.EncodePoint(true));
                 sb.EmitPush(name);
 
                 UInt160 chainHash = new UInt160(Crypto.Default.Hash160(sb.ToArray()));
@@ -62,7 +59,7 @@ namespace InvokeContractTest
 
                 Console.WriteLine("Appchain hash:" + chainHash.ToArray().Reverse().ToHexString());
 
-                string result = await ZoroHelper.SendRawTransaction(sb.ToArray(), scriptHash, prikey, pubkey, "");
+                string result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, "");
                 Console.WriteLine(result);
             }
         }
