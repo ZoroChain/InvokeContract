@@ -58,6 +58,11 @@ namespace InvokeContractTest
             return GetPublicKeyHash(pubkey);
         }
 
+        public static UInt160 GetMultiSigRedeemScriptHash(int m, KeyPair[] keypairs)
+        {
+            return Contract.CreateMultiSigRedeemScript(m, keypairs.Select(p => p.PublicKey).ToArray()).ToScriptHash();
+        }
+
         public static byte[] Sign(byte[] data, byte[] prikey, ECPoint pubkey)
         {
             return Crypto.Default.Sign(data, prikey, pubkey.EncodePoint(false).Skip(1).ToArray());
@@ -85,16 +90,38 @@ namespace InvokeContractTest
             }
         }
 
+        public static void AddWitness(Transaction tx, byte[][] signdata, int m, ECPoint[] pubkeys)
+        {
+            var vscript = Contract.CreateMultiSigRedeemScript(m, pubkeys).ToArray();
+
+            using (var sb = new ScriptBuilder())
+            {
+                int i = 0;
+                foreach (var sig in signdata)
+                {
+                    sb.EmitPush(sig);
+                    if (++i >= m)
+                        break;
+                }
+
+                var iscript = sb.ToArray();
+
+                AddWitness(tx, vscript, iscript);
+            }
+        }
+
         public static void AddWitness(Transaction tx, byte[] signdata, ECPoint pubkey)
         {
             var vscript = Contract.CreateSignatureRedeemScript(pubkey).ToArray();
 
-            var sb = new ThinNeo.ScriptBuilder();
-            sb.EmitPushBytes(signdata);
+            using (var sb = new ScriptBuilder())
+            {
+                sb.EmitPush(signdata);
 
-            var iscript = sb.ToArray();
+                var iscript = sb.ToArray();
 
-            AddWitness(tx, vscript, iscript);
+                AddWitness(tx, vscript, iscript);
+            }
         }
 
         public static void AddWitness(Transaction tx, byte[] vscript, byte[] iscript)
@@ -146,19 +173,18 @@ namespace InvokeContractTest
             sb.EmitPush(Neo.VM.OpCode.DROP);
         }
 
-        public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair)
+        public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair, Fixed8 gasLimit, Fixed8 gasPrice)
         {
             InvocationTransaction tx = new InvocationTransaction
             {
                 ChainHash = UInt160.Zero,
                 Script = script,
-                GasLimit = Fixed8.Zero,
+                GasPrice = gasPrice,
+                GasLimit = gasLimit.Ceiling(),
+                ScriptHash = Contract.CreateSignatureRedeemScript(keypair.PublicKey).ToScriptHash()
             };
 
-            tx.Attributes = new TransactionAttribute[1];
-            tx.Attributes[0] = new TransactionAttribute();
-            tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
-            tx.Attributes[0].Data = Contract.CreateSignatureRedeemScript(keypair.PublicKey).ToScriptHash().ToArray();
+            tx.Attributes = new TransactionAttribute[0];
 
             byte[] data = GetHashData(tx);
             byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
@@ -167,26 +193,43 @@ namespace InvokeContractTest
             return tx;
         }
 
+        public static InvocationTransaction MakeMultiSignatureTransaction(byte[] script, int m, KeyPair[] keypairs, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = new InvocationTransaction
+            {
+                ChainHash = UInt160.Zero,
+                Script = script,
+                GasPrice = gasPrice,
+                GasLimit = gasLimit.Ceiling(),
+                ScriptHash = GetMultiSigRedeemScriptHash(m, keypairs)
+            };
+
+            int count = keypairs.Length;
+            ECPoint[] pubkeys = keypairs.Select(p => p.PublicKey).ToArray();
+
+            tx.Attributes = new TransactionAttribute[0];
+
+            byte[] data = GetHashData(tx);
+            byte[][] signatures = new byte[count][];
+
+            int i = 0;
+            foreach (KeyPair keypair in keypairs.OrderBy(p => p.PublicKey))
+            {
+                signatures[i++] = Sign(data, keypair.PrivateKey, keypair.PublicKey);
+            }
+
+            AddWitness(tx, signatures, m, pubkeys);
+            return tx;
+        }
+
         public static string GetTransactionRawData(InvocationTransaction tx)
         {
             return tx.ToArray().ToHexString();
         }
 
-        public static async Task<string> SendRawTransaction(string appchainHash, string rawdata)
+        public static async Task<string> SendRawTransaction(byte[] script, KeyPair keypair, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
         {
-            MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-            postRawArray.AddArrayValue(appchainHash);
-            postRawArray.AddArrayValue(rawdata);
-
-            byte[] postdata;
-            var url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-            string result = await Helper.HttpPost(url, postdata);
-            return result;
-        }
-
-        public static async Task<string> SendRawTransaction(byte[] script, KeyPair keypair, string chainHash)
-        {
-            InvocationTransaction tx = MakeTransaction(script, keypair);
+            InvocationTransaction tx = MakeTransaction(script, keypair, gasLimit, gasPrice);
 
             string rawdata = tx.ToArray().ToHexString();
 
@@ -211,6 +254,41 @@ namespace InvokeContractTest
             {
                 result = await Helper.HttpPost(url, postdata);
                 
+            }
+            catch (Exception)
+            {
+            }
+
+            return result;
+        }
+
+        public static async Task<string> SendRawTransaction(byte[] script, int m, KeyPair[] keypairs, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = MakeMultiSignatureTransaction(script, m, keypairs, gasLimit, gasPrice);
+
+            string rawdata = tx.ToArray().ToHexString();
+
+            string url;
+            byte[] postdata;
+
+            if (Program.ChainID == "Zoro")
+            {
+                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                postRawArray.AddArrayValue(chainHash);
+                postRawArray.AddArrayValue(rawdata);
+
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+            }
+            else
+            {
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+            }
+
+            string result = "";
+            try
+            {
+                result = await Helper.HttpPost(url, postdata);
+
             }
             catch (Exception)
             {
@@ -249,6 +327,36 @@ namespace InvokeContractTest
             }
 
             return result;
+        }
+
+        public static async Task<decimal> GetScriptGasConsumed(byte[] script, string chainHash)
+        {
+            var info = await InvokeScript(script, chainHash);
+
+            MyJson.JsonNode_Object json_result_array = MyJson.Parse(info) as MyJson.JsonNode_Object;
+            MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
+
+            var consume = json_result_obj["gas_consumed"].ToString();
+            return decimal.Parse(consume);
+        }
+
+        public static string GetJsonValue(MyJson.JsonNode_Object item)
+        {
+            var type = item["type"].ToString();
+            var value = item["value"];
+            if (type == "ByteArray")
+            {
+                var bt = ThinNeo.Debug.DebugTool.HexString2Bytes(value.AsString());
+                var num = new BigInteger(bt);
+                return num.ToString();
+
+            }
+            else if (type == "Integer")
+            {
+                return value.ToString();
+
+            }
+            return "";
         }
     }
 }

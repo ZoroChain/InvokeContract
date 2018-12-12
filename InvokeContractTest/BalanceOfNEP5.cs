@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Zoro;
-using Zoro.Cryptography.ECC;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -14,17 +13,23 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            string[] ChainHashList = Config.getStringArray("ChainHashList");
             string WIF = Config.getValue("WIF");
             string ContractHash = Config.getValue("ContractHash");
-
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 account = ZoroHelper.GetPublicKeyHash(pubkey);
+            string[] ChainHashList = Config.getStringArray("ChainHashList");
+            string nativeNEP5 = Config.getValue("NativeNEP5");
+            UInt256.TryParse(nativeNEP5, out UInt256 nativeNEP5AssetId);
+            UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "balanceOf", account);
+                if (nativeNEP5AssetId != null)
+                {
+                    sb.EmitSysCall("Zoro.NativeNEP5.BalanceOf", nativeNEP5AssetId, address);
+                }
+                else
+                {
+                    sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "balanceOf", address);
+                }
 
                 if (Program.ChainID == "Zoro")
                 {
@@ -54,7 +59,7 @@ namespace InvokeContractTest
 
                 if (stack != null && stack.Count >= 1)
                 {
-                    string value = Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object);
+                    string value = ZoroHelper.GetJsonValue(stack[0] as MyJson.JsonNode_Object);
                     Console.WriteLine($"balanceOf {chainHash}: {value}");
                 }
             }

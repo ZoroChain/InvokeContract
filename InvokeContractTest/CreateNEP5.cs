@@ -52,33 +52,9 @@ namespace InvokeContractTest
                 sb.EmitPush(script);
                 sb.EmitSysCall("Neo.Contract.Create");
 
-                string scriptPublish = sb.ToArray().ToHexString();
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
 
-                byte[] postdata;
-                string url;
-                if (Program.ChainID == "Zoro")
-                {
-                    MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                    postArray.AddArrayValue(ChainHash);
-                    postArray.AddArrayValue(scriptPublish);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
-                }
-                else
-                {
-                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
-                }
-
-                var result = await Helper.HttpPost(url, postdata);
-
-                MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
-                MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
-
-                var consume = json_result_obj["gas_consumed"].ToString();
-
-                decimal gas_consumed = decimal.Parse(consume);
-
-                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, ChainHash);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

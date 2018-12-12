@@ -59,7 +59,9 @@ namespace InvokeContractTest
 
                 Console.WriteLine("Appchain hash:" + chainHash.ToArray().Reverse().ToHexString());
 
-                string result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, "");
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), "");
+
+                string result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, "", Fixed8.FromDecimal(gas), Config.GasPrice);
                 Console.WriteLine(result);
             }
         }

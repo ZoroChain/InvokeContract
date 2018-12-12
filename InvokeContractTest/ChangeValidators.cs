@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Zoro;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -69,7 +70,9 @@ namespace InvokeContractTest
                 sb.EmitPush(validators.Length);
                 sb.EmitSysCall("Zoro.AppChain.ChangeValidators");
 
-                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, appchainHash);
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), appchainHash);
+
+                result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, appchainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
                 Console.WriteLine(result);
             }
                 

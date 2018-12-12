@@ -46,6 +46,7 @@ namespace InvokeContractTest
             RegExample(new LocalTest_HashSet());
             RegExample(new CrossChainTransaction());
             RegExample(new ConcurrentCrossChain());
+            RegExample(new RetrieveNativeNEP5());
         }
 
         static void ShowMenu()

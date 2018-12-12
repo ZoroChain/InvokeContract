@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
+using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -10,18 +11,18 @@ namespace InvokeContractTest
 {
     class CocurrentNEP5Transfer : IExample
     {
-        public string Name => "ManyThread 开启并发交易";
+        public string Name => "CocurrentNEP5Transfer 开启并发交易";
 
         public string ID => "5";
 
-        public string WIF { get; private set; }
-        public string TargetWIF { get; private set; }
         public string ContractHash { get; private set; }
         public string[] ChainHashList { get; private set; }
 
         private KeyPair keypair;
         private UInt160 scriptHash;
         private UInt160 targetscripthash;
+        private UInt256 nativeNEP5AssetId;
+        private Fixed8 gasPrice = Fixed8.FromDecimal((decimal)0.001);
         public string transferValue;
         public int transNum = 0;
         private int interval = 0;
@@ -35,9 +36,16 @@ namespace InvokeContractTest
             {
                 ZoroHelper.PushRandomBytes(sb);
 
-                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                if (nativeNEP5AssetId != null)
+                {
+                    sb.EmitSysCall("Zoro.NativeNEP5.Transfer", nativeNEP5AssetId, scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                }
+                else
+                {
+                    sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                }              
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, gasPrice, Config.GasPrice);
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
 
@@ -88,19 +96,22 @@ namespace InvokeContractTest
 
             this.transNum = int.Parse(param2);
             this.interval = int.Parse(param4);
+            this.transferValue = param3;
 
             ChainHashList = Config.getStringArray("ChainHashList");
-            WIF = Config.getValue("WIF");
-            TargetWIF = Config.getValue("targetWIF");
+            string WIF = Config.getValue("WIF");
+            string targetWIF = Config.getValue("targetWIF");
             ContractHash = Config.getValue("ContractHash");
-            transferValue = param3;// Config.getValue("transferValue");
+            string nativeNEP5 = Config.getValue("NativeNEP5");
+            UInt256.TryParse(nativeNEP5, out nativeNEP5AssetId);
 
-            Console.WriteLine(WIF.ToString());
-            Console.WriteLine(TargetWIF.ToString());
+            Console.WriteLine($"From:{WIF.ToString()}");
+            Console.WriteLine($"To:{targetWIF.ToString()}");
+            Console.WriteLine($"Value:{transferValue}");
 
             keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
-            targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(TargetWIF);
+            targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
             stop = 0;
 

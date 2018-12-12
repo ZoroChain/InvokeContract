@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using Zoro;
 
 namespace InvokeContractTest
 {
     class Config
     {
         public static MyJson.IJsonNode configJson = null;
+
+        public static Fixed8 GasPrice = Fixed8.One;
 
         public static void init(string configPath) {
             configJson = MyJson.Parse(File.ReadAllText(configPath));

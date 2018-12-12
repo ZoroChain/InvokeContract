@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
+using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -14,14 +15,13 @@ namespace InvokeContractTest
 
         public string ID => "6";
 
-        public string WIF { get; private set; }
-        public string TargetWIF { get; private set; }
         public string ContractHash { get; private set; }
-        public string[] ChainHashList { get; private set; }
 
         private UInt160 scriptHash;
         private KeyPair keypair;
         private UInt160 targetscripthash;
+        private UInt256 nativeNEP5AssetId;
+        private Fixed8 gasPrice = Fixed8.FromDecimal((decimal)0.001);
         private string transferValue;
         private int cocurrentNum = 0;
         private int transNum = 0;
@@ -33,9 +33,16 @@ namespace InvokeContractTest
             {
                 ZoroHelper.PushRandomBytes(sb);
 
-                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                if (nativeNEP5AssetId != null)
+                {
+                    sb.EmitSysCall("Zoro.NativeNEP5.Transfer", nativeNEP5AssetId, scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                }
+                else
+                {
+                    sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                }
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, gasPrice, Config.GasPrice);
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
             }
@@ -53,35 +60,37 @@ namespace InvokeContractTest
 
             this.transNum = int.Parse(param2);
             this.cocurrentNum = int.Parse(param1);
+            this.transferValue = param3;
 
-            ChainHashList = Config.getStringArray("ChainHashList");
-            WIF = Config.getValue("WIF");
-            TargetWIF = Config.getValue("targetWIF");
+            string[] chainHashList = Config.getStringArray("ChainHashList");
+            string WIF = Config.getValue("WIF");
+            string targetWIF = Config.getValue("targetWIF");
             ContractHash = Config.getValue("ContractHash");
-            transferValue = param3;
+            string nativeNEP5 = Config.getValue("NativeNEP5");
+            UInt256.TryParse(nativeNEP5, out nativeNEP5AssetId);
 
             Console.WriteLine(WIF.ToString());
-            Console.WriteLine(TargetWIF.ToString());
+            Console.WriteLine(targetWIF.ToString());
 
             keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
 
-            targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(TargetWIF);
+            targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
             stop = 0;
 
-            Task.Run(() => RunTask());
+            Task.Run(() => RunTask(chainHashList));
 
             Console.WriteLine("输入任意键停止:");
             var input = Console.ReadLine();
             Interlocked.Exchange(ref stop, 1);
         }
 
-        public void RunTask()
+        public void RunTask(string[] chainHashList)
         {
             Random rd = new Random();
 
-            int chainNum = ChainHashList.Length;
+            int chainNum = chainHashList.Length;
 
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
 
@@ -120,7 +129,7 @@ namespace InvokeContractTest
                     Task.Run(() =>
                     {
                         int index = rd.Next(0, chainNum);
-                        string chainHash = ChainHashList[index];
+                        string chainHash = chainHashList[index];
 
                         Interlocked.Increment(ref waitingNum);
                         Interlocked.Decrement(ref pendingNum);
