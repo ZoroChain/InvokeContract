@@ -14,6 +14,11 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
+            await Task.Run(() => Test());
+        }
+
+        private void Test()
+        { 
             Console.WriteLine("输入创建Hash的数量（单位：万）:");
             var param = Console.ReadLine();
 

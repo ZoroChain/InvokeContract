@@ -11,7 +11,7 @@
   "ContractPath": "BcpContract.avm",
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
   "transferValue": "10000",
-  "NativeNEP5": "0x9b8234024472d5c734da8523f546a4349e68668c856da8d7ce3b1b3f91608b71",
+  "NativeNEP5": "0x306eea29f743b0acf732042bf4e53d55ad020b29c1545a890345d92aa49a350a",
   "NativeNEP5Issuer": [
     "L1S9WsnRRuXAQqNtGsJcQak7htpWALWM7355zaiUegTV8UBwQXSJ",
     "KwTr9bT5G8AGnFBpp81WiF5ij4vvb61cuURYM7VhAkfqSLcXC3Kf",

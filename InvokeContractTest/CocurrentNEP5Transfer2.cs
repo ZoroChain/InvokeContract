@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
-using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -15,34 +14,56 @@ namespace InvokeContractTest
 
         public string ID => "6";
 
-        public string ContractHash { get; private set; }
-
         private UInt160 scriptHash;
         private KeyPair keypair;
         private UInt160 targetscripthash;
+        private UInt160 nep5ContractHash;
         private UInt256 nativeNEP5AssetId;
-        private Fixed8 gasPrice = Fixed8.FromDecimal((decimal)0.001);
+        private Fixed8 GasPriceNEP5 = Fixed8.FromDecimal((decimal)4.5);
+        private Fixed8 GasPriceNativeNEP5 = Fixed8.FromDecimal((decimal)0.001);
         private string transferValue;
+        private int transType = 0;
         private int cocurrentNum = 0;
         private int transNum = 0;
         private int stop = 0;
 
-        protected async void nep5Transfer(int idx, string chainHash)
+        protected async void CallTransfer(string chainHash)
+        {
+            if (transType == 0)
+            {
+                await NativeNEP5Transfer(chainHash);
+            }
+            else if (transType == 1)
+            {
+                await NEP5Transfer(chainHash);
+            }
+        }
+
+        protected async Task NativeNEP5Transfer(string chainHash)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 ZoroHelper.PushRandomBytes(sb);
 
-                if (nativeNEP5AssetId != null)
-                {
-                    sb.EmitSysCall("Zoro.NativeNEP5.Transfer", nativeNEP5AssetId, scriptHash, targetscripthash, BigInteger.Parse(transferValue));
-                }
-                else
-                {
-                    sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
-                }
+                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", nativeNEP5AssetId, scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, gasPrice, Config.GasPrice);
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, GasPriceNativeNEP5, Config.GasPrice);
+
+                //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                //Console.WriteLine(resJO.ToString());
+            }
+        }
+
+        protected async Task NEP5Transfer(string chainHash)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                ZoroHelper.PushRandomBytes(sb);
+
+                sb.EmitAppCall(nep5ContractHash, "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+
+                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, GasPriceNEP5, Config.GasPrice);
+
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
             }
@@ -50,32 +71,46 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
-            Console.WriteLine("输入并发的数量:");
-            var param1 = Console.ReadLine();
-            Console.WriteLine("发送几次交易");
-            var param2 = Console.ReadLine();
-            Console.WriteLine("转账金额");
-            var param3 = Console.ReadLine();
-            Console.WriteLine("start {0} Thread {1} Transaction {2}", param1, param2, param3);
+            await Task.Run(() => Test());
+        }
 
-            this.transNum = int.Parse(param2);
-            this.cocurrentNum = int.Parse(param1);
-            this.transferValue = param3;
+        private void Test()
+        {
+            Console.Write("选择交易类型，0 - NativeNEP5, 1 - NEP5 SmartContract：");
+            var param1 = Console.ReadLine();
+            Console.Write("输入并发的数量：");
+            var param2 = Console.ReadLine();
+            Console.Write("发送几次交易：");
+            var param3 = Console.ReadLine();
+            Console.Write("转账金额：");
+            var param4 = Console.ReadLine();
+
+            transType = int.Parse(param1);
+            transNum = int.Parse(param3);
+            cocurrentNum = int.Parse(param2);
+            transferValue = param4;
 
             string[] chainHashList = Config.getStringArray("ChainHashList");
             string WIF = Config.getValue("WIF");
             string targetWIF = Config.getValue("targetWIF");
-            ContractHash = Config.getValue("ContractHash");
-            string nativeNEP5 = Config.getValue("NativeNEP5");
-            UInt256.TryParse(nativeNEP5, out nativeNEP5AssetId);
-
-            Console.WriteLine(WIF.ToString());
-            Console.WriteLine(targetWIF.ToString());
 
             keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
-
             targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+
+            string contractHash = Config.getValue("ContractHash");
+            nep5ContractHash = UInt160.Parse(contractHash);
+
+            string nativeNEP5 = Config.getValue("NativeNEP5");
+            nativeNEP5AssetId = UInt256.Parse(nativeNEP5);
+
+            if (transType == 0 || transType == 1)
+            {
+                Console.WriteLine($"From:{WIF}");
+                Console.WriteLine($"To:{targetWIF}");
+                Console.WriteLine($"Count:{transNum}");
+                Console.WriteLine($"Value:{transferValue}");
+            }
 
             stop = 0;
 
@@ -136,7 +171,7 @@ namespace InvokeContractTest
 
                         try
                         {
-                            nep5Transfer(j, chainHash);
+                            CallTransfer(chainHash);
                         }
                         catch(Exception)
                         {

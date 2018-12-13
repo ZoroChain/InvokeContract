@@ -33,7 +33,7 @@ namespace InvokeContractTest
             await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
         }
 
-        public async Task SendTransaction(UInt256 nativeNEP5AssetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
+        async Task SendTransaction(UInt256 nativeNEP5AssetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
         {
             KeyPair[] keypairs = wif_list.Select(p => ZoroHelper.GetKeyPairFromWIF(p)).ToArray();
             int m = keypairs.Length / 2 + 1;
@@ -57,41 +57,32 @@ namespace InvokeContractTest
             }
         }
 
-        decimal GetGasConsumed(string info)
-        {
-            MyJson.JsonNode_Object json_result_array = MyJson.Parse(info) as MyJson.JsonNode_Object;
-            MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
-
-            var consume = json_result_obj["gas_consumed"].ToString();
-            return decimal.Parse(consume);
-        }
-
-        public async Task<byte> GetDecimals(UInt256 nativeNEP5AssetId, string chainHash)
+        async Task<byte> GetDecimals(UInt256 nativeNEP5AssetId, string chainHash)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Decimals", nativeNEP5AssetId);
 
-                var result = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 
-                return GetDecimals(result);
+                return ParseDecimals(info);
             }
         }
 
-        byte GetDecimals(string result)
+        byte ParseDecimals(string info)
         {
             byte decimals = 0;
 
-            MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
+            MyJson.JsonNode_Object json = MyJson.Parse(info) as MyJson.JsonNode_Object;
 
-            if (json_result_array.ContainsKey("result"))
+            if (json.ContainsKey("result"))
             {
-                MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
-                MyJson.JsonNode_Array stack = json_result_obj["stack"] as MyJson.JsonNode_Array;
+                MyJson.JsonNode_Object json_result = json["result"] as MyJson.JsonNode_Object;
+                MyJson.JsonNode_Array json_stack = json_result["stack"] as MyJson.JsonNode_Array;
 
-                if (stack != null && stack.Count >= 1)
+                if (json_stack != null && json_stack.Count >= 1)
                 {
-                    string value = ZoroHelper.GetJsonValue(stack[0] as MyJson.JsonNode_Object);
+                    string value = ZoroHelper.GetJsonValue(json_stack[0] as MyJson.JsonNode_Object);
                     decimals = byte.Parse(value);
                 }
             }
