@@ -20,7 +20,7 @@ namespace InvokeContractTest
             string transferValue = Console.ReadLine();
 
             string chainHash = Config.getValue("ChainHash");
-            string targetWIF = Config.getValue("targetWIF");
+            string targetWIF = Config.getValue("WIF");
             string nativeNEP5 = Config.getValue("NativeNEP5");
             string[] wif_list = Config.getStringArray("NativeNEP5Issuer");
             UInt256 assetId = UInt256.Parse(nativeNEP5);
