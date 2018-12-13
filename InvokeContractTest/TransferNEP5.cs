@@ -83,7 +83,9 @@ namespace InvokeContractTest
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
-                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas + 1), Config.GasPrice);
+                gas = Math.Max(Config.GasNEP5Transfer, gas);
+
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());
