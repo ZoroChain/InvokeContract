@@ -9,7 +9,7 @@ namespace InvokeContractTest
 {
     class CreateNEP5 : IExample
     {
-        public string Name => "create 发布一个合约";
+        public string Name => "CreateNEP5 发布一个NEP5测试合约";
 
         public string ID => "0";
 

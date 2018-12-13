@@ -346,7 +346,7 @@ namespace InvokeContractTest
             var value = item["value"];
             if (type == "ByteArray")
             {
-                var bt = ThinNeo.Debug.DebugTool.HexString2Bytes(value.AsString());
+                var bt = HexString2Bytes(value.AsString());
                 var num = new BigInteger(bt);
                 return num.ToString();
 

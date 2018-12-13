@@ -10,7 +10,7 @@ namespace InvokeContractTest
 {
     class CreateAppChain : IExample
     {
-        public string Name => "createAppChain 创建应用链";
+        public string Name => "CreateAppChain 创建应用链";
 
         public string ID => "8";
 

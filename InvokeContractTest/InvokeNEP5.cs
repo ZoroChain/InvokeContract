@@ -7,7 +7,7 @@ namespace InvokeContractTest
 {
     class InvokeNEP5 : IExample
     {
-        public string Name => "invoke 预调用合约方法";
+        public string Name => "InvokeNEP5 查询NEP5合约的信息";
 
         public string ID => "2";
 

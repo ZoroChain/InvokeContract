@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using System.Globalization;
 using Zoro;
 using Zoro.Wallets;
 using Neo.VM;
@@ -10,7 +11,7 @@ namespace InvokeContractTest
 {
     class RetrieveNativeNEP5 : IExample
     {
-        public string Name => "RetrieveNativeNEP5 进行一次native nep5货币分配";
+        public string Name => "RetrieveNativeNEP5 向发行账户申请货币";
 
         public string ID => "13";
 
@@ -27,9 +28,9 @@ namespace InvokeContractTest
 
             byte decimals = await GetDecimals(assetId, chainHash);
 
-            BigInteger value = BigInteger.Parse(transferValue) * BigInteger.Pow(10, decimals);
+            Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
-            await SendTransaction(assetId, wif_list, targetWIF, BigInteger.Parse(value.ToString()), chainHash);
+            await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
         }
 
         public async Task SendTransaction(UInt256 nativeNEP5AssetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
