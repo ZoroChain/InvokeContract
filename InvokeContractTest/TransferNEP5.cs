@@ -22,36 +22,50 @@ namespace InvokeContractTest
             string contractHash = Config.getValue("ContractHash");
             string nativeNEP5AssetId = Config.getValue("NativeNEP5");
 
-            Console.Write("Choose Transaction Type，0 - NativeNEP5, 1 - NEP5 SmartContract：");
-            string nep5type = Console.ReadLine();
+            Console.Write("Choose Transaction Type，0 - NativeNEP5, 1 - NEP5 SmartContract, 2 - ContractTransaction：");
+            int transType = int.Parse(Console.ReadLine());
 
             Console.Write("Transfer Amount:");
             string transferValue = Console.ReadLine();
 
-            if (nep5type == "0" || nep5type == "1")
+            if (transType == 0 || transType == 1 || transType == 2)
             {
                 Console.WriteLine($"From:{WIF}");
                 Console.WriteLine($"To:{targetWIF}");
                 Console.WriteLine($"Value:{transferValue}");
             }
 
-            if (nep5type == "0")
+            if (transType == 0)
             {
-                Console.WriteLine($"NativeNEP5 AssetId:{nativeNEP5AssetId}");
+                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
 
                 byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
                 Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
                 await TransferNativeNEP5(chainHash, WIF, targetWIF, nativeNEP5AssetId, new BigInteger(value));
             }
-            else if(nep5type == "1")
+            else if(transType == 1)
             {
-                Console.WriteLine($"NEP5 Contract Hash:{contractHash}");
+                Console.WriteLine($"Contract Hash:{contractHash}");
 
                 byte decimals = await GetNEP5Decimals(contractHash, chainHash);
                 Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
                 await TransferNEP5Async(chainHash, WIF, targetWIF, contractHash, new BigInteger(value));
+            }
+            else if (transType == 2)
+            {
+                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
+
+                byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+                KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+                UInt160 targetAddress = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+                UInt256 assetId = UInt256.Parse(nativeNEP5AssetId);
+
+                BigInteger bigValue = new BigInteger(value);
+                await ZoroHelper.SendContractTransaction(assetId, keypair, targetAddress, new Fixed8((long)bigValue), chainHash, Config.GasPrice);
             }
         }
 
@@ -69,7 +83,7 @@ namespace InvokeContractTest
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas + 1), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas + 1), Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());
@@ -90,7 +104,7 @@ namespace InvokeContractTest
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

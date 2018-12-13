@@ -51,7 +51,7 @@ namespace InvokeContractTest
 
                 sb.EmitSysCall("Zoro.NativeNEP5.Transfer", assetId, scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, GasPriceNativeNEP5, Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasPriceNativeNEP5, Config.GasPrice);
 
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());
@@ -74,7 +74,7 @@ namespace InvokeContractTest
 
                 sb.EmitAppCall(contractHash, "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
 
-                var result = await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, chainHash, GasPriceNEP5, Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, GasPriceNEP5, Config.GasPrice);
 
                 //MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 //Console.WriteLine(resJO.ToString());

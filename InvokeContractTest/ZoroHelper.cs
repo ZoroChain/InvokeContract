@@ -173,130 +173,6 @@ namespace InvokeContractTest
             sb.EmitPush(Neo.VM.OpCode.DROP);
         }
 
-        public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = new InvocationTransaction
-            {
-                ChainHash = UInt160.Zero,
-                Script = script,
-                GasPrice = gasPrice,
-                GasLimit = gasLimit.Ceiling(),
-                ScriptHash = Contract.CreateSignatureRedeemScript(keypair.PublicKey).ToScriptHash()
-            };
-
-            tx.Attributes = new TransactionAttribute[0];
-
-            byte[] data = GetHashData(tx);
-            byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
-            AddWitness(tx, signdata, keypair.PublicKey);
-
-            return tx;
-        }
-
-        public static InvocationTransaction MakeMultiSignatureTransaction(byte[] script, int m, KeyPair[] keypairs, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = new InvocationTransaction
-            {
-                ChainHash = UInt160.Zero,
-                Script = script,
-                GasPrice = gasPrice,
-                GasLimit = gasLimit.Ceiling(),
-                ScriptHash = GetMultiSigRedeemScriptHash(m, keypairs)
-            };
-
-            int count = keypairs.Length;
-            ECPoint[] pubkeys = keypairs.Select(p => p.PublicKey).ToArray();
-
-            tx.Attributes = new TransactionAttribute[0];
-
-            byte[] data = GetHashData(tx);
-            byte[][] signatures = new byte[count][];
-
-            int i = 0;
-            foreach (KeyPair keypair in keypairs.OrderBy(p => p.PublicKey))
-            {
-                signatures[i++] = Sign(data, keypair.PrivateKey, keypair.PublicKey);
-            }
-
-            AddWitness(tx, signatures, m, pubkeys);
-            return tx;
-        }
-
-        public static string GetTransactionRawData(InvocationTransaction tx)
-        {
-            return tx.ToArray().ToHexString();
-        }
-
-        public static async Task<string> SendRawTransaction(byte[] script, KeyPair keypair, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = MakeTransaction(script, keypair, gasLimit, gasPrice);
-
-            string rawdata = tx.ToArray().ToHexString();
-
-            string url;
-            byte[] postdata;
-
-            if (Program.ChainID == "Zoro")
-            {
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(chainHash);
-                postRawArray.AddArrayValue(rawdata);
-
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-            }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-            }
-
-            string result = "";
-            try
-            {
-                result = await Helper.HttpPost(url, postdata);
-                
-            }
-            catch (Exception)
-            {
-            }
-
-            return result;
-        }
-
-        public static async Task<string> SendRawTransaction(byte[] script, int m, KeyPair[] keypairs, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
-        {
-            InvocationTransaction tx = MakeMultiSignatureTransaction(script, m, keypairs, gasLimit, gasPrice);
-
-            string rawdata = tx.ToArray().ToHexString();
-
-            string url;
-            byte[] postdata;
-
-            if (Program.ChainID == "Zoro")
-            {
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(chainHash);
-                postRawArray.AddArrayValue(rawdata);
-
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-            }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-            }
-
-            string result = "";
-            try
-            {
-                result = await Helper.HttpPost(url, postdata);
-
-            }
-            catch (Exception)
-            {
-            }
-
-            return result;
-        }
-
         public static async Task<string> InvokeScript(byte[] script, string chainHash)
         {
             string scriptPublish = script.ToHexString();
@@ -358,5 +234,127 @@ namespace InvokeContractTest
             }
             return "";
         }
+
+        public static InvocationTransaction MakeTransaction(byte[] script, KeyPair keypair, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = new InvocationTransaction
+            {
+                Script = script,
+                GasPrice = gasPrice,
+                GasLimit = gasLimit.Ceiling(),
+                ScriptHash = GetPublicKeyHash(keypair.PublicKey)
+            };
+
+            tx.Attributes = new TransactionAttribute[0];
+
+            byte[] data = GetHashData(tx);
+            byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
+            AddWitness(tx, signdata, keypair.PublicKey);
+
+            return tx;
+        }
+
+        public static InvocationTransaction MakeMultiSignatureTransaction(byte[] script, int m, KeyPair[] keypairs, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = new InvocationTransaction
+            {
+                Script = script,
+                GasPrice = gasPrice,
+                GasLimit = gasLimit.Ceiling(),
+                ScriptHash = GetMultiSigRedeemScriptHash(m, keypairs)
+            };
+
+            int count = keypairs.Length;
+            ECPoint[] pubkeys = keypairs.Select(p => p.PublicKey).ToArray();
+
+            tx.Attributes = new TransactionAttribute[0];
+
+            byte[] data = GetHashData(tx);
+            byte[][] signatures = new byte[count][];
+
+            int i = 0;
+            foreach (KeyPair keypair in keypairs.OrderBy(p => p.PublicKey))
+            {
+                signatures[i++] = Sign(data, keypair.PrivateKey, keypair.PublicKey);
+            }
+
+            AddWitness(tx, signatures, m, pubkeys);
+            return tx;
+        }
+
+        public static ContractTransaction MakeContractTransaction(UInt256 assetId, KeyPair keypair, UInt160 targetScriptHash, Fixed8 value, Fixed8 gasPrice)
+        {
+            ContractTransaction tx = new ContractTransaction
+            {
+                AssetId = assetId,
+                From = GetPublicKeyHash(keypair.PublicKey),
+                To = targetScriptHash,
+                Value = value,
+                GasPrice = gasPrice
+            };
+
+            tx.Attributes = new TransactionAttribute[0];
+
+            byte[] data = GetHashData(tx);
+            byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
+            AddWitness(tx, signdata, keypair.PublicKey);
+
+            return tx;
+        }
+
+        public static async Task<string> SendRawTransaction(string rawdata, string chainHash)
+        {
+            string url;
+            byte[] postdata;
+
+            if (Program.ChainID == "Zoro")
+            {
+                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+                postRawArray.AddArrayValue(chainHash);
+                postRawArray.AddArrayValue(rawdata);
+
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
+            }
+            else
+            {
+                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
+            }
+
+            string result = "";
+            try
+            {
+                result = await Helper.HttpPost(url, postdata);
+
+            }
+            catch (Exception)
+            {
+            }
+
+            return result;
+        }
+
+        public static async Task<string> SendInvocationTransaction(byte[] script, KeyPair keypair, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = MakeTransaction(script, keypair, gasLimit, gasPrice);
+
+            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
+        }
+
+        public static async Task<string> SendInvocationTransaction(byte[] script, int m, KeyPair[] keypairs, string chainHash, Fixed8 gasLimit, Fixed8 gasPrice)
+        {
+            InvocationTransaction tx = MakeMultiSignatureTransaction(script, m, keypairs, gasLimit, gasPrice);
+
+            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
+        }
+
+        public static async Task<string> SendContractTransaction(UInt256 assetId, KeyPair keypair, UInt160 targetScriptHash, Fixed8 value, string chainHash, Fixed8 gasPrice)
+        {
+            ContractTransaction tx = MakeContractTransaction(assetId, keypair, targetScriptHash, value, gasPrice);
+
+            string rawdata = tx.ToArray().ToHexString();
+
+            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
+        }
+
     }
 }

@@ -30,7 +30,7 @@ namespace InvokeContractTest
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
 
-                await ZoroHelper.SendRawTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
             }
         }
     }
