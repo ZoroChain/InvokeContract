@@ -58,6 +58,19 @@ namespace InvokeContractTest
             return GetPublicKeyHash(pubkey);
         }
 
+        public static UInt160 GetPublicKeyHashFromAddress(string address)
+        {
+            System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
+            var alldata = Base58.Decode(address);
+            var data = alldata.Take(alldata.Length - 4).ToArray();
+            var hash = sha256.ComputeHash(data);
+            hash = sha256.ComputeHash(hash);
+            var hashbts = hash.Take(4).ToArray();
+            var datahashbts = alldata.Skip(alldata.Length - 4).ToArray();
+            var pkhash = data.Skip(1).ToArray();
+            return new UInt160(pkhash);
+        }
+
         public static UInt160 GetMultiSigRedeemScriptHash(int m, KeyPair[] keypairs)
         {
             return Contract.CreateMultiSigRedeemScript(m, keypairs.Select(p => p.PublicKey).ToArray()).ToScriptHash();

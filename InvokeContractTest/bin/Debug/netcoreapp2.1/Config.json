@@ -5,25 +5,20 @@
     ""
   ],
   "id_GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
-  "RpcUrl": "http://localhost:20333",
+  "RpcUrl": "http://localhost:20372",
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
   "transferValue": "10000",
-  "NativeNEP5": "0x306eea29f743b0acf732042bf4e53d55ad020b29c1545a890345d92aa49a350a",
+  "NativeNEP5": "0xf8dc3ba76bbcb80f0cb0d4d1781d2c5b0419c5b068fbae17d9f006bfb61a56ed",
   "NativeNEP5Issuer": [
-    "L1S9WsnRRuXAQqNtGsJcQak7htpWALWM7355zaiUegTV8UBwQXSJ",
-    "KwTr9bT5G8AGnFBpp81WiF5ij4vvb61cuURYM7VhAkfqSLcXC3Kf",
-    "L3khzPHEAwrCQhsdPDNvbnYHzgkiAdUik9CNqmfFTrtidoPYNQ8W",
-    "L5HxUKArsSts8PwyU8NFQt19wQYquMXNZuKoHX6YGtS5ALGRrzgW"
+    "KzJzLfSiyP7ns4bS9b6p58jzMLrp3BAeGnMsMpnRKzyXdzMddtBF",
+    "L2fWpujYD7TxQRGhSocixvomQhhEjDSiQ3av7QauN6skppokyfFY",
+    "L1m1MpzDxjH73oRVnanfoHisqEBWjdRpYMS8EiYzSMJjVkXzj7uM",
+    "Kyuv26Rb9Ys7aq44oEU9vyNdV32YvbpQyS86Zkk22JWmjd1RwNJi"
   ],
-  "NelRpcUrl": "https://api.nel.group/api/testnet",
-  "NeoRpcUrl": "http://47.52.192.77:20332",
-  "ZoroBcp": "0x67147557c0b6431e9b9297de26b46d9889434e49",
-  "NeoBcp": "0x04e31cee0443bb916534dad2adf508458920e66d",
   "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
-  "NeoBank": "0xfa5fc5036431314244e20ca0d9eae7c0e9024f41",
-  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf",
-  "gasFee": 0.0001
+  "TestContract": "0xbb361ed3c874f87e2993dfd617cfd6e34d33f6c2",
+  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf"
 }

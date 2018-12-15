@@ -27,7 +27,7 @@ namespace InvokeContractTest
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             byte[] script = System.IO.File.ReadAllBytes(ContractPath);
-            Console.WriteLine("合约脚本Hash：" + script.ToScriptHash().ToArray().ToHexString());
+            Console.WriteLine("合约脚本Hash：" + script.ToScriptHash());
             byte[] parameter__list = ZoroHelper.HexString2Bytes("0710");
             byte[] return_type = ZoroHelper.HexString2Bytes("05");
             int need_storage = 1;
