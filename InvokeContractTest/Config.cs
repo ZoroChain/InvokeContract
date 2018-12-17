@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using Zoro;
 
 namespace InvokeContractTest
 {
@@ -9,8 +8,18 @@ namespace InvokeContractTest
     {
         public static MyJson.IJsonNode configJson = null;
 
-        public static void init(string configPath) {
+        public static Fixed8 GasPrice = Fixed8.One;
+
+        public static decimal GasNEP5Transfer = (decimal)4.5;
+
+        public static Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
+
+        public static void init(string configPath)
+        {
             configJson = MyJson.Parse(File.ReadAllText(configPath));
+
+            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal((decimal)4.5);
+            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
         }
 
         public static string getValue(string name) {

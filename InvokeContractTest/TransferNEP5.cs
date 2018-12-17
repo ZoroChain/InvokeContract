@@ -1,112 +1,160 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
-using System.Threading;
+using System.Globalization;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using Zoro;
-using Zoro.IO;
-using Zoro.Ledger;
-using Zoro.Network.P2P.Payloads;
+using Zoro.Wallets;
 using Neo.VM;
 
 namespace InvokeContractTest
 {
     class TransferNEP5 : IExample
     {
-        public string Name => "transfer 进行一次nep5合约交易";
+        public string Name => "TransferNEP5 进行一次NEP5转账交易";
 
         public string ID => "4";
 
-        private string chainHash;
-        private string wif;
-        private string targetwif;
-        private string contractHash;
-        public string ChainHash { get => chainHash; set => chainHash = value; }
-        public string WIF { get => wif; set => wif = value; }
-        public string targetWIF { get => targetwif; set => targetwif = value; }
-        public string ContractHash { get => contractHash; set => contractHash = value; }
-        public string transferValue;
-
         public async Task StartAsync()
         {
-            ChainHash = Config.getValue("ChainHash");
-            WIF = Config.getValue("WIF");
-            targetWIF = Config.getValue("targetWIF");
-            ContractHash = Config.getValue("ContractHash");
-            transferValue = Config.getValue("transferValue");
+            string chainHash = Config.getValue("ChainHash");
+            string WIF = Config.getValue("WIF");
+            string targetWIF = Config.getValue("targetWIF");
+            string contractHash = Config.getValue("ContractHash");
+            string nativeNEP5AssetId = Config.getValue("NativeNEP5");
 
-            await TransferNEP5Async(ChainHash, WIF, targetWIF, ContractHash, transferValue);
+            Console.Write("Choose Transaction Type，0 - NativeNEP5, 1 - NEP5 SmartContract, 2 - ContractTransaction：");
+            int transType = int.Parse(Console.ReadLine());
+
+            Console.Write("Transfer Amount:");
+            string transferValue = Console.ReadLine();
+
+            if (transType == 0 || transType == 1 || transType == 2)
+            {
+                Console.WriteLine($"From:{WIF}");
+                Console.WriteLine($"To:{targetWIF}");
+                Console.WriteLine($"Value:{transferValue}");
+            }
+
+            if (transType == 0)
+            {
+                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
+
+                byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+                await TransferNativeNEP5(chainHash, WIF, targetWIF, nativeNEP5AssetId, new BigInteger(value));
+            }
+            else if(transType == 1)
+            {
+                Console.WriteLine($"Contract Hash:{contractHash}");
+
+                byte decimals = await GetNEP5Decimals(contractHash, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+                await TransferNEP5Async(chainHash, WIF, targetWIF, contractHash, new BigInteger(value));
+            }
+            else if (transType == 2)
+            {
+                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
+
+                byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+                KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+                UInt160 targetAddress = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+                UInt256 assetId = UInt256.Parse(nativeNEP5AssetId);
+
+                BigInteger bigValue = new BigInteger(value);
+                await ZoroHelper.SendContractTransaction(assetId, keypair, targetAddress, new Fixed8((long)bigValue), chainHash, Config.GasPrice);
+            }
         }
 
-        public async Task TransferNEP5Async(string ChainHash, string WIF, string targetWIF, string ContractHash, string transferValue) {
-
-            byte[] prikey = ZoroHelper.GetPrivateKeyFromWIF(WIF);
-            Zoro.Cryptography.ECC.ECPoint pubkey = ZoroHelper.GetPublicKeyFromPrivateKey(prikey);
-            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(pubkey);
-
-            byte[] tragetprikey = ZoroHelper.GetPrivateKeyFromWIF(targetWIF);
-            Zoro.Cryptography.ECC.ECPoint targetpubkey = ZoroHelper.GetPublicKeyFromPrivateKey(tragetprikey);
-            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHash(targetpubkey);
-
-            Console.WriteLine(WIF.ToString());
-            Console.WriteLine(targetWIF.ToString());
+        public async Task TransferNEP5Async(string chainHash, string WIF, string targetWIF, string contractHash, BigInteger value)
+        {
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-                byte[] randomBytes = new byte[32];
-                using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(randomBytes);
-                }
-                BigInteger randomNum = new BigInteger(randomBytes);
-                sb.EmitPush(randomNum);
-                sb.EmitPush(Neo.VM.OpCode.DROP);
-                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "transfer", scriptHash, targetscripthash, BigInteger.Parse(transferValue));
+                ZoroHelper.PushRandomBytes(sb);
 
-                InvocationTransaction tx = new InvocationTransaction
-                {
-                    ChainHash = ZoroHelper.Parse(ChainHash),
-                    Version = 1,
-                    Script = sb.ToArray(),
-                    Gas = Fixed8.Zero,
-                };
+                sb.EmitAppCall(UInt160.Parse(contractHash), "transfer", scriptHash, targetscripthash, value);
 
-                tx.Inputs = new CoinReference[0];
-                tx.Outputs = new TransactionOutput[0];
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
-                tx.Attributes = new TransactionAttribute[1];
-                tx.Attributes[0] = new TransactionAttribute();
-                tx.Attributes[0].Usage = TransactionAttributeUsage.Script;
-                tx.Attributes[0].Data = scriptHash.ToArray();
+                gas = Math.Max(Config.GasNEP5Transfer, gas);
 
-                byte[] data = ZoroHelper.GetHashData(tx);
-                byte[] signdata = ZoroHelper.Sign(data, prikey, pubkey);
-                ZoroHelper.AddWitness(tx, signdata, pubkey);
-                string rawdata = ThinNeo.Helper.Bytes2HexString(tx.ToArray());
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
 
-                string url;
-                byte[] postdata;
-                if (Program.ChainID == "Zoro")
-                {
-                    MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                    postRawArray.AddArrayValue(ChainHash);
-                    postRawArray.AddArrayValue(rawdata);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-                }
-                else
-                {
-                    url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-                }
-
-                var result = await Helper.HttpPost(url, postdata);
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());
             }
+        }
 
+        public async Task TransferNativeNEP5(string chainHash, string WIF, string targetWIF, string assetId, BigInteger value)
+        {
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                ZoroHelper.PushRandomBytes(sb);
+
+                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", UInt256.Parse(assetId), scriptHash, targetscripthash, value);
+
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
+
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+
+                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                Console.WriteLine(resJO.ToString());
+            }
+        }
+
+        async Task<byte> GetNEP5Decimals(string contractHash, string chainHash)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitAppCall(UInt160.Parse(contractHash), "decimals");
+
+                var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+
+                return ParseDecimals(info);
+            }
+        }
+
+        async Task<byte> GetNativeNEP5Decimals(string assetId, string chainHash)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", UInt256.Parse(assetId));
+
+                var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+
+                return ParseDecimals(info);
+            }
+        }
+
+        byte ParseDecimals(string info)
+        {
+            byte decimals = 0;
+
+            MyJson.JsonNode_Object json = MyJson.Parse(info) as MyJson.JsonNode_Object;
+
+            if (json.ContainsKey("result"))
+            {
+                MyJson.JsonNode_Object json_result = json["result"] as MyJson.JsonNode_Object;
+                MyJson.JsonNode_Array json_stack = json_result["stack"] as MyJson.JsonNode_Array;
+
+                if (json_stack != null && json_stack.Count >= 1)
+                {
+                    string value = ZoroHelper.GetJsonValue(json_stack[0] as MyJson.JsonNode_Object);
+                    decimals = byte.Parse(value);
+                }
+            }
+            return decimals;
         }
     }
 }

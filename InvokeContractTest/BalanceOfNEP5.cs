@@ -1,85 +1,107 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using ThinNeo;
+using Zoro;
+using Neo.VM;
 
 namespace InvokeContractTest
 {
     class BalanceOfNEP5 : IExample
     {
-        public string Name => "balanceOf 获取余额";
+        public string Name => "BalanceOfNEP5 获取NEP5账户余额";
 
         public string ID => "3";
 
-        public string WIF { get; private set; }
-        public string ContractHash { get; private set; }
-        public string[] ChainHashList { get; private set; }
-
         public async Task StartAsync()
         {
-            ChainHashList = Config.getStringArray("ChainHashList");
-            WIF = Config.getValue("WIF");
-            ContractHash = Config.getValue("ContractHash");
+            string WIF = Config.getValue("WIF");
+            string ContractHash = Config.getValue("ContractHash");
+            string[] ChainHashList = Config.getStringArray("ChainHashList");
+            string nativeNEP5 = Config.getValue("NativeNEP5");
+            UInt256.TryParse(nativeNEP5, out UInt256 nativeNEP5AssetId);
+            UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
 
-            byte[] prikey = ThinNeo.Helper.GetPrivateKeyFromWIF(WIF);
-            byte[] pubkey = ThinNeo.Helper.GetPublicKeyFromPrivateKey(prikey);
-            string address = ThinNeo.Helper.GetAddressFromPublicKey(pubkey);
-            var scripthash = ThinNeo.Helper.GetPublicKeyHashFromAddress(address);
-
-            ScriptBuilder sb = new ScriptBuilder();
-            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-            array.AddArrayValue("(addr)" + address);
-            sb.EmitParamJson(array);
-            sb.EmitPushString("balanceOf");
-            sb.EmitAppCall(new Hash160(ContractHash));
-
-            Console.WriteLine($"Address: {WIF.ToString()}");
-
-            string scriptPublish = ThinNeo.Helper.Bytes2HexString(sb.ToArray());
-            string url;
-            byte[] postdata;
-            if (ChainHashList.Length > 0)
+            Console.WriteLine($"Account: {WIF}");
+            if (Program.ChainID == "Zoro" && nativeNEP5AssetId != null)
             {
-                foreach (var chainHash in ChainHashList)
-                {
-                    MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                    postArray.AddArrayValue(chainHash);
-                    postArray.AddArrayValue(scriptPublish);
-
-                    url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
-                    await BalanceOf(chainHash, url, postdata);
-                }
+                await BalanceOfNativeNEP5(nativeNEP5AssetId, address, ChainHashList);
             }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
-                await BalanceOf("", url, postdata);
+
+            await BalanceOfNEP5Contract(ContractHash, address, ChainHashList);
+        }
+
+        async Task BalanceOfNativeNEP5(UInt256 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {                
+                sb.EmitSysCall("Zoro.NativeNEP5.BalanceOf", nativeNEP5AssetId, address);
+                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", nativeNEP5AssetId);
+
+                Console.WriteLine($"NativeNEP5: {nativeNEP5AssetId}");
+                foreach (var chainHash in chainHashList)
+                {
+                    var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                    var value = GetBalanceFromJson(info);
+                    string chainName = chainHash.Length > 0 ? chainHash : "Root";
+                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                }
             }
         }
 
-        async Task BalanceOf(string chainHash, string url, byte[] postdata)
+        async Task BalanceOfNEP5Contract(string NEP5Contract, UInt160 address, string[] chainHashList)
         {
-            var result = await Helper.HttpPost(url, postdata);
-
-            MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
-
-            if (json_result_array.ContainsKey("result"))
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
-                MyJson.JsonNode_Object json_result_obj = json_result_array["result"] as MyJson.JsonNode_Object;
-                MyJson.JsonNode_Array stack = json_result_obj["stack"] as MyJson.JsonNode_Array;
+                sb.EmitAppCall(ZoroHelper.Parse(NEP5Contract), "balanceOf", address);
+                sb.EmitAppCall(ZoroHelper.Parse(NEP5Contract), "decimals");
 
-                if (stack != null && stack.Count >= 1)
+                Console.WriteLine($"NEP5Contract: {NEP5Contract}");
+                if (Program.ChainID == "Zoro")
                 {
-                    string value = Helper.GetJsonBigInteger(stack[0] as MyJson.JsonNode_Object);
-                    Console.WriteLine($"balanceOf {chainHash}: {value}");
+                    foreach (var chainHash in chainHashList)
+                    {
+                        var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                        var value = GetBalanceFromJson(info);
+                        string chainName = chainHash.Length > 0 ? chainHash : "Root";
+                        Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                    }
+                }
+                else
+                {
+                    string chainHash = UInt160.Zero.ToString();
+                    var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                    var value = GetBalanceFromJson(info);
+                    Console.WriteLine($"balanceOf: {value}");
                 }
             }
-            else if(json_result_array.ContainsKey("error"))
+        }
+
+        string GetBalanceFromJson(string info)
+        {
+            string result = "";
+            MyJson.JsonNode_Object json = MyJson.Parse(info) as MyJson.JsonNode_Object;
+
+            if (json.ContainsKey("result"))
             {
-                MyJson.JsonNode_Object json_error_obj = json_result_array["error"] as MyJson.JsonNode_Object;
-                Console.WriteLine($"balanceOf {chainHash}: {json_error_obj}");
+                MyJson.JsonNode_Object json_result = json["result"] as MyJson.JsonNode_Object;
+                MyJson.JsonNode_Array stack = json_result["stack"] as MyJson.JsonNode_Array;
+
+                if (stack != null && stack.Count >= 2)
+                {
+                    string balance = ZoroHelper.GetJsonValue(stack[0] as MyJson.JsonNode_Object);
+                    string decimals = ZoroHelper.GetJsonValue(stack[1] as MyJson.JsonNode_Object);
+                    
+                    Decimal value = Decimal.Parse(balance) / new Decimal(Math.Pow(10, int.Parse(decimals)));
+                    string fmt = "{0:N" + decimals + "}";
+                    result = string.Format(fmt, value);
+                }
             }
+            else if (json.ContainsKey("error"))
+            {
+                MyJson.JsonNode_Object json_error_obj = json["error"] as MyJson.JsonNode_Object;
+                result = json_error_obj.ToString();
+            }
+
+            return result;
         }
     }
 }

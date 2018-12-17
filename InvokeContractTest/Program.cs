@@ -1,17 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Numerics;
-using System.Globalization;
-using ThinNeo;
-using Zoro;
-using Zoro.Cryptography;
-using Zoro.Ledger;
-using Zoro.Network.P2P.Payloads;
-using Zoro.SmartContract;
-using Zoro.Wallets;
-using System.Threading;
 
 namespace InvokeContractTest
 {
@@ -58,6 +46,9 @@ namespace InvokeContractTest
             RegExample(new LocalTest_HashSet());
             RegExample(new CrossChainTransaction());
             RegExample(new ConcurrentCrossChain());
+            RegExample(new RetrieveNativeNEP5());
+            RegExample(new CreateContract());
+            RegExample(new ContractTest());
         }
 
         static void ShowMenu()
