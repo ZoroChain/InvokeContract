@@ -23,9 +23,10 @@ namespace InvokeContractTest
         private int transType = 0;
         private int cocurrentNum = 0;
         private int transNum = 0;
-        private int stop = 0;
 
-        protected async void CallTransfer(string chainHash)
+        private CancellationTokenSource cancelTokenSource;
+
+        protected async Task CallTransfer(string chainHash)
         {
             if (transType == 0)
             {
@@ -114,19 +115,17 @@ namespace InvokeContractTest
                 Console.WriteLine($"Value:{transferValue}");
             }
 
-            stop = 0;
+            cancelTokenSource = new CancellationTokenSource();
 
             Task.Run(() => RunTask(chainHashList));
 
-            Console.WriteLine("输入任意键停止:");
+            Console.WriteLine("输入回车键停止:");
             var input = Console.ReadLine();
-            Interlocked.Exchange(ref stop, 1);
+            cancelTokenSource.Cancel();
         }
 
         public void RunTask(string[] chainHashList)
         {
-            Random rd = new Random();
-
             int chainNum = chainHashList.Length;
 
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
@@ -141,8 +140,14 @@ namespace InvokeContractTest
             int waitingNum = 0;
             int pendingNum = 0;
 
-            while (stop == 0)
+            while (true)
             {
+                if (cancelTokenSource.IsCancellationRequested)
+                {
+                    Console.WriteLine("停止发送交易.");
+                    break;
+                }
+
                 if (transNum > 0)
                 {
                     if (total >= transNum && pendingNum == 0 && waitingNum == 0)
@@ -163,8 +168,9 @@ namespace InvokeContractTest
                 for (int i = 0; i < cc; i++)
                 {
                     int j = i;
-                    Task.Run(() =>
+                    Task.Run(async () =>
                     {
+                        Random rd = new Random();
                         int index = rd.Next(0, chainNum);
                         string chainHash = chainHashList[index];
 
@@ -173,7 +179,7 @@ namespace InvokeContractTest
 
                         try
                         {
-                            CallTransfer(chainHash);
+                            await CallTransfer(chainHash);
                         }
                         catch(Exception)
                         {
@@ -191,11 +197,11 @@ namespace InvokeContractTest
                     Thread.Sleep(oneSecond - span);
                 }
 
-                if (waitingNum > cocurrentNum * 2 || pendingNum > cocurrentNum)
+                if (pendingNum > cocurrentNum)
                 {
                     cc = Math.Max(cc - step, 0);
                 }
-                else if (waitingNum < cocurrentNum * 2 && pendingNum < cocurrentNum)
+                else if (pendingNum < cocurrentNum)
                 {
                     cc = Math.Min(cc + step, cocurrentNum);
                 }
