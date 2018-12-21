@@ -23,11 +23,15 @@ namespace InvokeContractTest
         private int transType = 0;
         private int cocurrentNum = 0;
         private int transNum = 0;
+        private int waitingNum = 0;
+        private int step = 0;
 
         private CancellationTokenSource cancelTokenSource;
 
-        protected async Task CallTransfer(string chainHash)
+        protected async void CallTransfer(string chainHash)
         {
+            Interlocked.Increment(ref waitingNum);
+
             if (transType == 0)
             {
                 await NativeNEP5Transfer(chainHash);
@@ -40,6 +44,8 @@ namespace InvokeContractTest
             {
                 await ContranctTransfer(chainHash);
             }
+
+            Interlocked.Decrement(ref waitingNum);
         }
 
         protected async Task NativeNEP5Transfer(string chainHash)
@@ -87,11 +93,14 @@ namespace InvokeContractTest
             var param3 = Console.ReadLine();
             Console.Write("转账金额：");
             var param4 = Console.ReadLine();
+            Console.Write("是否自动调整并发数量：");
+            var param5 = Console.ReadLine();
 
             transType = int.Parse(param1);
             transNum = int.Parse(param3);
             cocurrentNum = int.Parse(param2);
             transferValue = param4;
+            step = int.Parse(param5) == 1 ? 10 : 0;
 
             string[] chainHashList = Config.getStringArray("ChainHashList");
             string WIF = Config.getValue("WIF");
@@ -115,6 +124,11 @@ namespace InvokeContractTest
                 Console.WriteLine($"Value:{transferValue}");
             }
 
+            ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCPortThreads);
+            ThreadPool.GetMaxThreads(out int maxWorkerThreads, out int maxCPortThreads);
+
+            ThreadPool.SetMinThreads(cocurrentNum, minCPortThreads);
+
             cancelTokenSource = new CancellationTokenSource();
 
             Task.Run(() => RunTask(chainHashList));
@@ -122,6 +136,8 @@ namespace InvokeContractTest
             Console.WriteLine("输入回车键停止:");
             var input = Console.ReadLine();
             cancelTokenSource.Cancel();
+
+            ThreadPool.SetMinThreads(minWorkerThreads, minCPortThreads);
         }
 
         public void RunTask(string[] chainHashList)
@@ -133,12 +149,12 @@ namespace InvokeContractTest
             int idx = 0;
             int total = 0;
 
-            int cc = Math.Min(cocurrentNum, 10);
-            int step = Math.Max(cocurrentNum / 10, 1);
+            int cc = step > 0 ? Math.Min(cocurrentNum, step) : cocurrentNum;
 
             int lastWaiting = 0;
-            int waitingNum = 0;
             int pendingNum = 0;
+
+            waitingNum = 0;
 
             while (true)
             {
@@ -168,25 +184,22 @@ namespace InvokeContractTest
                 for (int i = 0; i < cc; i++)
                 {
                     int j = i;
-                    Task.Run(async () =>
+                    Task.Run(() =>
                     {
                         Random rd = new Random();
                         int index = rd.Next(0, chainNum);
                         string chainHash = chainHashList[index];
 
-                        Interlocked.Increment(ref waitingNum);
                         Interlocked.Decrement(ref pendingNum);
 
                         try
                         {
-                            await CallTransfer(chainHash);
+                            CallTransfer(chainHash);
                         }
-                        catch(Exception)
+                        catch(Exception e)
                         {
-
+                            Console.WriteLine(e.Message);
                         }
-                        
-                        Interlocked.Decrement(ref waitingNum);
                     });
                 }
 
@@ -197,13 +210,16 @@ namespace InvokeContractTest
                     Thread.Sleep(oneSecond - span);
                 }
 
-                if (pendingNum > cocurrentNum)
+                if (step > 0)
                 {
-                    cc = Math.Max(cc - step, 0);
-                }
-                else if (pendingNum < cocurrentNum)
-                {
-                    cc = Math.Min(cc + step, cocurrentNum);
+                    if (pendingNum > cocurrentNum)
+                    {
+                        cc = Math.Max(cc - step, 0);
+                    }
+                    else if (pendingNum < cocurrentNum)
+                    {
+                        cc = Math.Min(cc + step, cocurrentNum);
+                    }
                 }
             }
         }
