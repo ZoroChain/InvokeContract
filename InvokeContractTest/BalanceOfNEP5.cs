@@ -21,7 +21,7 @@ namespace InvokeContractTest
             UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
 
             Console.WriteLine($"Account: {WIF}");
-            if (Program.ChainID == "Zoro" && nativeNEP5AssetId != null)
+            if (nativeNEP5AssetId != null)
             {
                 await BalanceOfNativeNEP5(nativeNEP5AssetId, address, ChainHashList);
             }
@@ -55,22 +55,12 @@ namespace InvokeContractTest
                 sb.EmitAppCall(ZoroHelper.Parse(NEP5Contract), "decimals");
 
                 Console.WriteLine($"NEP5Contract: {NEP5Contract}");
-                if (Program.ChainID == "Zoro")
+                foreach (var chainHash in chainHashList)
                 {
-                    foreach (var chainHash in chainHashList)
-                    {
-                        var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
-                        var value = GetBalanceFromJson(info);
-                        string chainName = chainHash.Length > 0 ? chainHash : "Root";
-                        Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
-                    }
-                }
-                else
-                {
-                    string chainHash = UInt160.Zero.ToString();
                     var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
                     var value = GetBalanceFromJson(info);
-                    Console.WriteLine($"balanceOf: {value}");
+                    string chainName = chainHash.Length > 0 ? chainHash : "Root";
+                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
                 }
             }
         }

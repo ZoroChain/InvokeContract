@@ -52,19 +52,10 @@ namespace InvokeContractTest
 
                 Console.WriteLine($"Contract: {contractHash}");
 
-                if (Program.ChainID == "Zoro")
+                foreach (var chainHash in ChainHashList)
                 {
-                    foreach (var chainHash in ChainHashList)
-                    {
-                        var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
-                        string chainName = chainHash.Length > 0 ? chainHash : "Root";
-                        Console.WriteLine($"{info}");
-                    }
-                }
-                else
-                {
-                    string chainHash = UInt160.Zero.ToString();
                     var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                    string chainName = chainHash.Length > 0 ? chainHash : "Root";
                     Console.WriteLine($"{info}");
                 }
             }

@@ -192,18 +192,11 @@ namespace InvokeContractTest
 
             byte[] postdata;
             string url;
-            if (Program.ChainID == "Zoro")
-            {
-                MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
-                postArray.AddArrayValue(chainHash);
-                postArray.AddArrayValue(scriptPublish);
+            MyJson.JsonNode_Array postArray = new MyJson.JsonNode_Array();
+            postArray.AddArrayValue(chainHash);
+            postArray.AddArrayValue(scriptPublish);
 
-                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
-            }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, new MyJson.JsonNode_ValueString(scriptPublish));
-            }
+            url = Helper.MakeRpcUrlPost(Program.local, "invokescript", out postdata, postArray.ToArray());
 
             string result = "";
             try
@@ -320,18 +313,11 @@ namespace InvokeContractTest
             string url;
             byte[] postdata;
 
-            if (Program.ChainID == "Zoro")
-            {
-                MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
-                postRawArray.AddArrayValue(chainHash);
-                postRawArray.AddArrayValue(rawdata);
+            MyJson.JsonNode_Array postRawArray = new MyJson.JsonNode_Array();
+            postRawArray.AddArrayValue(chainHash);
+            postRawArray.AddArrayValue(rawdata);
 
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
-            }
-            else
-            {
-                url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, new MyJson.JsonNode_ValueString(rawdata));
-            }
+            url = Helper.MakeRpcUrlPost(Program.local, "sendrawtransaction", out postdata, postRawArray.ToArray());
 
             string result = "";
             try
