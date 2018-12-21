@@ -100,7 +100,7 @@ namespace InvokeContractTest
             transNum = int.Parse(param3);
             cocurrentNum = int.Parse(param2);
             transferValue = param4;
-            step = int.Parse(param5) == 1 ? 10 : 0;
+            step = int.Parse(param5) == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
 
             string[] chainHashList = Config.getStringArray("ChainHashList");
             string WIF = Config.getValue("WIF");
