@@ -48,7 +48,7 @@ namespace InvokeContractTest
                 sb.EmitPush(return_type);
                 sb.EmitPush(parameter__list);
                 sb.EmitPush(script);
-                sb.EmitSysCall("Neo.Contract.Create");
+                sb.EmitSysCall("Zoro.Contract.Create");
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
 

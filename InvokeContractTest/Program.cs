@@ -30,22 +30,25 @@ namespace InvokeContractTest
         }
         static void InitExample()
         {
-            RegExample(new Deployment(), "0");
-            RegExample(new CreateNEP5(), "1");
-            RegExample(new DeployNEP5(), "2");
-            RegExample(new InvokeNEP5(), "3");
-            RegExample(new BalanceOf(), "4");
-            RegExample(new TransferTest(), "5");
-            RegExample(new CocurrentTransfer(), "6");
-            RegExample(new RetrieveBCP(), "9");
-            RegExample(new CreateAppChain(), "10");
-            RegExample(new ChangeSeedList(), "11");
-            RegExample(new ChangeValidators(), "12");            
-            RegExample(new CrossChainTransaction(), "20");
-            RegExample(new ConcurrentCrossChain(), "21");            
-            RegExample(new CreateContract(), "22");
-            RegExample(new ContractTest(), "23");
-            RegExample(new LocalTest_HashSet(), "30");
+            RegExample(new RetrieveBCP(), "0");
+            RegExample(new Deployment(), "1");
+            RegExample(new BalanceOf(), "2");
+            RegExample(new TransferTest(), "3");
+            RegExample(new CocurrentTransfer(), "4");
+            RegExample(new CrossChainTransaction(), "5");
+            RegExample(new ConcurrentCrossChain(), "6");
+            RegExample(new CreateContract(), "7");
+            RegExample(new ContractTest(), "8");
+            RegExample(new CreateNEP5(), "11");
+            RegExample(new DeployNEP5(), "12");
+            RegExample(new InvokeNEP5(), "13");
+            RegExample(new CreateNativeNEP5(), "14");
+            RegExample(new DeployNativeNEP5(), "15");
+            RegExample(new InvokeNativeNEP5(), "16");            
+            RegExample(new CreateAppChain(), "17");
+            RegExample(new ChangeSeedList(), "18");
+            RegExample(new ChangeValidators(), "19");
+            RegExample(new LocalTest_HashSet(), "20");
         }
 
         static void ShowMenu()

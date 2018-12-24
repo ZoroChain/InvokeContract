@@ -20,8 +20,8 @@ namespace InvokeContractTest
 
             Console.WriteLine($"Account: {WIF}");
             await BalanceOfBCP(BCPHash, address, ChainHashList);
-            await BalanceOfNativeNEP5(nativeNEP5Hash, address, ChainHashList);
             await BalanceOfNEP5Contract(ContractHash, address, ChainHashList);
+            await BalanceOfNativeNEP5(nativeNEP5Hash, address, ChainHashList);
         }
 
         async Task BalanceOfBCP(string BCPHash, UInt160 address, string[] chainHashList)
@@ -33,13 +33,12 @@ namespace InvokeContractTest
                 sb.EmitSysCall("Zoro.GlobalAsset.BalanceOf", assetId, address);
                 sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", assetId);
 
-                Console.WriteLine($"BCP: {assetId}");
                 foreach (var chainHash in chainHashList)
                 {
                     var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
                     var value = GetBalanceFromJson(info);
                     string chainName = chainHash.Length > 0 ? chainHash : "Root";
-                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                    Console.WriteLine($"BalanceOf BCP:{value}, chain:{chainName}");
                 }
             }
         }
@@ -54,13 +53,12 @@ namespace InvokeContractTest
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "BalanceOf", nativeNEP5AssetId, address);
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", nativeNEP5AssetId);
 
-                Console.WriteLine($"NativeNEP5: {nativeNEP5AssetId}");
                 foreach (var chainHash in chainHashList)
                 {
                     var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
                     var value = GetBalanceFromJson(info);
                     string chainName = chainHash.Length > 0 ? chainHash : "Root";
-                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                    Console.WriteLine($"BalanceOf NativeNEP5:{value}, chain:{chainName}");
                 }
             }
         }
@@ -72,13 +70,12 @@ namespace InvokeContractTest
                 sb.EmitAppCall(ZoroHelper.Parse(NEP5Contract), "balanceOf", address);
                 sb.EmitAppCall(ZoroHelper.Parse(NEP5Contract), "decimals");
 
-                Console.WriteLine($"NEP5Contract: {NEP5Contract}");
                 foreach (var chainHash in chainHashList)
                 {
                     var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
                     var value = GetBalanceFromJson(info);
                     string chainName = chainHash.Length > 0 ? chainHash : "Root";
-                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                    Console.WriteLine($"BalanceOf NEP5:{value}, chain:{chainName}");
                 }
             }
         }

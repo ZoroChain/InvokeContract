@@ -10,7 +10,7 @@
   "ContractPath": "BcpContract.avm",
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
   "transferValue": "10000",
-  "NativeNEP5": "0xf8dc3ba76bbcb80f0cb0d4d1781d2c5b0419c5b068fbae17d9f006bfb61a56ed",
+  "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96",
   "BCPHash": "0xf8dc3ba76bbcb80f0cb0d4d1781d2c5b0419c5b068fbae17d9f006bfb61a56ed",
   "BCPIssuer": [
     "L1S9WsnRRuXAQqNtGsJcQak7htpWALWM7355zaiUegTV8UBwQXSJ",

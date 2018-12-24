@@ -137,6 +137,10 @@ namespace InvokeContractTest
                 return num.ToString();
 
             }
+            else if (type == "Integer")
+            {
+                return value.ToString();
+            }
             return "";
         }
 

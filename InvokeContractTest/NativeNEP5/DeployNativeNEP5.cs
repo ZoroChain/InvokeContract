@@ -6,26 +6,28 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class DeployNEP5 : IExample
+    class DeployNativeNEP5 : IExample
     {
-        public string Name => "DeployNEP5 调用nep5合约中的deploy方法";
+        public string Name => "DeployNativeNEP5 调用NativeNEP5的Deploy方法";
 
         public async Task StartAsync()
         {
             string ChainHash = Config.getValue("ChainHash");
             string WIF = Config.getValue("WIF");
-            string ContractHash = Config.getValue("ContractHash");
+            string nativeNEP5Hash = Config.getValue("NativeNEP5");
 
-            await DeployNEP5Async(ChainHash, WIF, ContractHash);
+            await DeployNativeNEP5Async(ChainHash, WIF, nativeNEP5Hash);
         }
 
-        public async Task DeployNEP5Async(string ChainHash, string WIF, string ContractHash) {
+        public async Task DeployNativeNEP5Async(string ChainHash, string WIF, string nativeNEP5Hash)
+        {
+            UInt160 nativeNEP5AssetId = ZoroHelper.Parse(nativeNEP5Hash);
 
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "deploy", "1");
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Deploy", nativeNEP5AssetId);
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
 

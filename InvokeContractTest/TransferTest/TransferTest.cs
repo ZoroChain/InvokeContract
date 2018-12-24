@@ -36,7 +36,7 @@ namespace InvokeContractTest
 
             if (transType == 0)
             {
-                await TransferNEP5(nativeNEP5Hash, chainHash, transferValue, WIF, targetWIF);
+                await TransferNEP5(contractHash, chainHash, transferValue, WIF, targetWIF);
             }
             else if(transType == 1)
             {
@@ -50,9 +50,7 @@ namespace InvokeContractTest
 
         public async Task TransferNEP5(string contractHash, string chainHash, string transferValue, string WIF, string targetWIF)
         {
-            Console.WriteLine($"NEP5 Contract Hash:{contractHash}");
-
-            byte decimals = await GetNativeNEP5Decimals(contractHash, chainHash);
+            byte decimals = await GetNEP5Decimals(contractHash, chainHash);
             Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
             await TransferNEP5Async(chainHash, WIF, targetWIF, contractHash, new BigInteger(value));
@@ -60,8 +58,6 @@ namespace InvokeContractTest
 
         public async Task TransferNativeNEP5(string nativeNEP5Hash, string chainHash, string transferValue, string WIF, string targetWIF)
         {
-            Console.WriteLine($"NativeNEP5 AssetId:{nativeNEP5Hash}");
-
             byte decimals = await GetNativeNEP5Decimals(nativeNEP5Hash, chainHash);
             Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
@@ -70,8 +66,6 @@ namespace InvokeContractTest
 
         public async Task TransferGlobalAsset(string assetId, string chainHash, string transferValue, string WIF, string targetWIF)
         {
-            Console.WriteLine($"Global AssetId:{assetId}");
-
             byte decimals = await GetGlobalAssetDecimals(assetId, chainHash);
             Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
 
@@ -171,7 +165,7 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.GlobalAsset.Decimals", UInt256.Parse(assetId));
+                sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", UInt256.Parse(assetId));
 
                 var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 
