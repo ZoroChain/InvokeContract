@@ -9,8 +9,6 @@ namespace InvokeContractTest
     {
         public string Name => "InvokeNEP5 查询NEP5合约的信息";
 
-        public string ID => "2";
-
         public async Task StartAsync()
         {
             string chainHash = Config.getValue("ChainHash");

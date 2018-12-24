@@ -10,8 +10,6 @@ namespace InvokeContractTest
     {
         public string Name => "LocalTest HashSet 本地测试";
 
-        public string ID => "20";
-
         public async Task StartAsync()
         {
             await Task.Run(() => Test());

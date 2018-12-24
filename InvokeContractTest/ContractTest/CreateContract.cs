@@ -1,28 +1,26 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Neo.VM;
+using System;
 using Zoro;
-using Zoro.Wallets;
 using Zoro.SmartContract;
-using Neo.VM;
+using System.Threading.Tasks;
+using Zoro.Wallets;
 
 namespace InvokeContractTest
 {
-    class CreateNEP5 : IExample
+    class CreateContract : IExample
     {
-        public string Name => "CreateNEP5 发布一个NEP5测试合约";
-
-        public string ID => "0";
+        public string Name => "CreateContract 发布一个测试合约";
 
         public async Task StartAsync()
         {
             string ChainHash = Config.getValue("ChainHash");
             string WIF = Config.getValue("WIF");
-            string ContractPath = Config.getValue("ContractPath");
+            string ContractPath = "TestContract.avm";
 
-            await CreateNep5Async(ChainHash, WIF, ContractPath);
+            await CreateContractAsync(ChainHash, WIF, ContractPath);
         }
 
-        public async Task CreateNep5Async(string ChainHash, string WIF, string ContractPath)
+        public async Task CreateContractAsync(string ChainHash, string WIF, string ContractPath)
         {
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
@@ -30,12 +28,12 @@ namespace InvokeContractTest
             Console.WriteLine("合约脚本Hash：" + script.ToScriptHash());
             byte[] parameter__list = ZoroHelper.HexString2Bytes("0710");
             byte[] return_type = ZoroHelper.HexString2Bytes("05");
-            int need_storage = 1;
+            int need_storage = 0;
             int need_nep4 = 0;
             int need_canCharge = 4;
-            string name = "mygas";
+            string name = "test contract";
             string version = "1.0";
-            string auther = "LZ";
+            string auther = "zz";
             string email = "0";
             string description = "0";
             using (ScriptBuilder sb = new ScriptBuilder())

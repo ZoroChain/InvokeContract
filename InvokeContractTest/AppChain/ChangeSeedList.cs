@@ -10,8 +10,6 @@ namespace InvokeContractTest
     {
         public string Name => "ChangeSeedList 更改应用链种子节点地址";
 
-        public string ID => "9";
-
         public async Task StartAsync()
         {
             Console.WriteLine("AppChainHash:");

@@ -9,10 +9,7 @@ namespace InvokeContractTest
     {
         string Name {
             get;
-        }
-        string ID {
-            get;
-        }        
+        }     
         Task StartAsync();
     }
 }

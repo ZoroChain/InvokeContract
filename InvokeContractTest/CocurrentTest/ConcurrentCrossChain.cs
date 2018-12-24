@@ -19,7 +19,6 @@ namespace InvokeContractTest
     {
         public string Name => "ManyThread 开启跨链并发交易";
 
-        public string ID => "12";
         public string WIF { get; private set; }
         public string ContractHash { get; private set; }
 

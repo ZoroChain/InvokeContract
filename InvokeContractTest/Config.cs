@@ -20,6 +20,7 @@ namespace InvokeContractTest
 
             GasLimit["NEP5Transfer"] = Fixed8.FromDecimal((decimal)4.5);
             GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
+            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1);
         }
 
         public static string getValue(string name) {

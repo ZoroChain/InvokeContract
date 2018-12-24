@@ -9,8 +9,6 @@ namespace InvokeContractTest
     {
         public string Name => "DeployNEP5 调用nep5合约中的deploy方法";
 
-        public string ID => "1";
-
         public async Task StartAsync()
         {
             string ChainHash = Config.getValue("ChainHash");

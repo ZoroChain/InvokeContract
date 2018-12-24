@@ -5,36 +5,54 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class BalanceOfNEP5 : IExample
+    class BalanceOf : IExample
     {
-        public string Name => "BalanceOfNEP5 获取NEP5账户余额";
-
-        public string ID => "3";
+        public string Name => "BalanceOf 获取账户余额";
 
         public async Task StartAsync()
         {
             string WIF = Config.getValue("WIF");
             string ContractHash = Config.getValue("ContractHash");
             string[] ChainHashList = Config.getStringArray("ChainHashList");
-            string nativeNEP5 = Config.getValue("NativeNEP5");
-            UInt256.TryParse(nativeNEP5, out UInt256 nativeNEP5AssetId);
+            string BCPHash = Config.getValue("BCPHash");
+            string nativeNEP5Hash = Config.getValue("NativeNEP5");
             UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
 
             Console.WriteLine($"Account: {WIF}");
-            if (nativeNEP5AssetId != null)
-            {
-                await BalanceOfNativeNEP5(nativeNEP5AssetId, address, ChainHashList);
-            }
-
+            await BalanceOfBCP(BCPHash, address, ChainHashList);
+            await BalanceOfNativeNEP5(nativeNEP5Hash, address, ChainHashList);
             await BalanceOfNEP5Contract(ContractHash, address, ChainHashList);
         }
 
-        async Task BalanceOfNativeNEP5(UInt256 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
+        async Task BalanceOfBCP(string BCPHash, UInt160 address, string[] chainHashList)
         {
+            UInt256 assetId = UInt256.Parse(BCPHash);
+
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitSysCall("Zoro.GlobalAsset.BalanceOf", assetId, address);
+                sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", assetId);
+
+                Console.WriteLine($"BCP: {assetId}");
+                foreach (var chainHash in chainHashList)
+                {
+                    var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                    var value = GetBalanceFromJson(info);
+                    string chainName = chainHash.Length > 0 ? chainHash : "Root";
+                    Console.WriteLine($"balanceOf: {value}, chain:{chainName}");
+                }
+            }
+        }
+
+        async Task BalanceOfNativeNEP5(string nativeNEP5Hash, UInt160 address, string[] chainHashList)
+        {
+            if (!UInt160.TryParse(nativeNEP5Hash, out UInt160 nativeNEP5AssetId))
+                return;
+
             using (ScriptBuilder sb = new ScriptBuilder())
             {                
-                sb.EmitSysCall("Zoro.NativeNEP5.BalanceOf", nativeNEP5AssetId, address);
-                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", nativeNEP5AssetId);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "BalanceOf", nativeNEP5AssetId, address);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", nativeNEP5AssetId);
 
                 Console.WriteLine($"NativeNEP5: {nativeNEP5AssetId}");
                 foreach (var chainHash in chainHashList)

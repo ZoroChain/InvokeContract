@@ -12,8 +12,6 @@ namespace InvokeContractTest
     {
         public string Name => "CreateAppChain 创建应用链";
 
-        public string ID => "8";
-
         public async Task StartAsync()
         {
             Console.WriteLine("AppChainName:");

@@ -14,8 +14,6 @@ namespace InvokeContractTest
     {
         public string Name => "CreateTest 测试合约接口";
 
-        public string ID => "15";
-
         public async Task StartAsync()
         {
             string[] ChainHashList = Config.getStringArray("ChainHashList");
@@ -91,8 +89,8 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.NativeNEP5.BalanceOf", nativeNEP5AssetId, address);
-                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", nativeNEP5AssetId);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "BalanceOf", nativeNEP5AssetId, address);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", nativeNEP5AssetId);
 
                 Console.WriteLine($"NativeNEP5: {nativeNEP5AssetId}");
                 foreach (var chainHash in chainHashList)

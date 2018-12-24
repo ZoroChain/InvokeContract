@@ -9,12 +9,10 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class RetrieveNativeNEP5 : IExample
+    class RetrieveBCP : IExample
     {
-        public string Name => "RetrieveNativeNEP5 向发行账户申请货币";
-
-        public string ID => "13";
-
+        public string Name => "RetrieveBCP 向发行账户申请BCP货币";
+        
         public async Task StartAsync()
         {
             Console.WriteLine("转账金额");
@@ -22,9 +20,9 @@ namespace InvokeContractTest
 
             string chainHash = Config.getValue("ChainHash");
             string targetWIF = Config.getValue("WIF");
-            string nativeNEP5 = Config.getValue("NativeNEP5");
-            string[] wif_list = Config.getStringArray("NativeNEP5Issuer");
-            UInt256 assetId = UInt256.Parse(nativeNEP5);
+            string BCPHash = Config.getValue("BCPHash");
+            string[] wif_list = Config.getStringArray("BCPIssuer");
+            UInt256 assetId = UInt256.Parse(BCPHash);
 
             byte decimals = await GetDecimals(assetId, chainHash);
 
@@ -33,7 +31,7 @@ namespace InvokeContractTest
             await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
         }
 
-        async Task SendTransaction(UInt256 nativeNEP5AssetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
+        async Task SendTransaction(UInt256 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
         {
             KeyPair[] keypairs = wif_list.Select(p => ZoroHelper.GetKeyPairFromWIF(p)).ToArray();
             int m = keypairs.Length / 2 + 1;
@@ -46,7 +44,7 @@ namespace InvokeContractTest
             {
                 ZoroHelper.PushRandomBytes(sb);
 
-                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", nativeNEP5AssetId, scriptHash, targetscripthash, value);
+                sb.EmitSysCall("Zoro.GlobalAsset.Transfer", assetId, scriptHash, targetscripthash, value);
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
@@ -57,11 +55,11 @@ namespace InvokeContractTest
             }
         }
 
-        async Task<byte> GetDecimals(UInt256 nativeNEP5AssetId, string chainHash)
+        async Task<byte> GetDecimals(UInt256 assetId, string chainHash)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", nativeNEP5AssetId);
+                sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", assetId);
 
                 var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 

@@ -24,29 +24,28 @@ namespace InvokeContractTest
         }
 
         public static Dictionary<string, IExample> allExample = new System.Collections.Generic.Dictionary<string, IExample>();
-        static void RegExample(IExample example)
+        static void RegExample(IExample example, string id)
         {
-            allExample[example.ID.ToLower()] = example;
+            allExample[id.ToLower()] = example;
         }
         static void InitExample()
         {
-            RegExample(new CreateNEP5());
-            RegExample(new DeployNEP5());
-            RegExample(new InvokeNEP5());
-            RegExample(new BalanceOfNEP5());
-            RegExample(new TransferNEP5());
-            RegExample(new CocurrentNEP5Transfer());
-            RegExample(new CocurrentNEP5Transfer2());
-            RegExample(new Deployment());
-            RegExample(new CreateAppChain());
-            RegExample(new ChangeSeedList());
-            RegExample(new ChangeValidators());
-            RegExample(new LocalTest_HashSet());
-            RegExample(new CrossChainTransaction());
-            RegExample(new ConcurrentCrossChain());
-            RegExample(new RetrieveNativeNEP5());
-            RegExample(new CreateContract());
-            RegExample(new ContractTest());
+            RegExample(new Deployment(), "0");
+            RegExample(new CreateNEP5(), "1");
+            RegExample(new DeployNEP5(), "2");
+            RegExample(new InvokeNEP5(), "3");
+            RegExample(new BalanceOf(), "4");
+            RegExample(new TransferTest(), "5");
+            RegExample(new CocurrentTransfer(), "6");
+            RegExample(new RetrieveBCP(), "9");
+            RegExample(new CreateAppChain(), "10");
+            RegExample(new ChangeSeedList(), "11");
+            RegExample(new ChangeValidators(), "12");            
+            RegExample(new CrossChainTransaction(), "20");
+            RegExample(new ConcurrentCrossChain(), "21");            
+            RegExample(new CreateContract(), "22");
+            RegExample(new ContractTest(), "23");
+            RegExample(new LocalTest_HashSet(), "30");
         }
 
         static void ShowMenu()

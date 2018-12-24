@@ -8,11 +8,9 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class TransferNEP5 : IExample
+    class TransferTest : IExample
     {
-        public string Name => "TransferNEP5 进行一次NEP5转账交易";
-
-        public string ID => "4";
+        public string Name => "TransferTest 进行一次转账交易";
 
         public async Task StartAsync()
         {
@@ -20,9 +18,10 @@ namespace InvokeContractTest
             string WIF = Config.getValue("WIF");
             string targetWIF = Config.getValue("targetWIF");
             string contractHash = Config.getValue("ContractHash");
-            string nativeNEP5AssetId = Config.getValue("NativeNEP5");
+            string BCPHash = Config.getValue("BCPHash");
+            string nativeNEP5Hash = Config.getValue("NativeNEP5");
 
-            Console.Write("Choose Transaction Type，0 - NativeNEP5, 1 - NEP5 SmartContract, 2 - ContractTransaction：");
+            Console.Write("Choose Transaction Type，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP：");
             int transType = int.Parse(Console.ReadLine());
 
             Console.Write("Transfer Amount:");
@@ -37,36 +36,46 @@ namespace InvokeContractTest
 
             if (transType == 0)
             {
-                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
-
-                byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
-                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
-
-                await TransferNativeNEP5(chainHash, WIF, targetWIF, nativeNEP5AssetId, new BigInteger(value));
+                await TransferNEP5(nativeNEP5Hash, chainHash, transferValue, WIF, targetWIF);
             }
             else if(transType == 1)
             {
-                Console.WriteLine($"Contract Hash:{contractHash}");
-
-                byte decimals = await GetNEP5Decimals(contractHash, chainHash);
-                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
-
-                await TransferNEP5Async(chainHash, WIF, targetWIF, contractHash, new BigInteger(value));
+                await TransferNativeNEP5(nativeNEP5Hash, chainHash, transferValue, WIF, targetWIF);
             }
             else if (transType == 2)
             {
-                Console.WriteLine($"AssetId:{nativeNEP5AssetId}");
-
-                byte decimals = await GetNativeNEP5Decimals(nativeNEP5AssetId, chainHash);
-                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
-
-                KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
-                UInt160 targetAddress = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
-                UInt256 assetId = UInt256.Parse(nativeNEP5AssetId);
-
-                BigInteger bigValue = new BigInteger(value);
-                await ZoroHelper.SendContractTransaction(assetId, keypair, targetAddress, new Fixed8((long)bigValue), chainHash, Config.GasPrice);
+                await TransferGlobalAsset(BCPHash, chainHash, transferValue, WIF, targetWIF);
             }
+        }
+
+        public async Task TransferNEP5(string contractHash, string chainHash, string transferValue, string WIF, string targetWIF)
+        {
+            Console.WriteLine($"NEP5 Contract Hash:{contractHash}");
+
+            byte decimals = await GetNativeNEP5Decimals(contractHash, chainHash);
+            Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+            await TransferNEP5Async(chainHash, WIF, targetWIF, contractHash, new BigInteger(value));
+        }
+
+        public async Task TransferNativeNEP5(string nativeNEP5Hash, string chainHash, string transferValue, string WIF, string targetWIF)
+        {
+            Console.WriteLine($"NativeNEP5 AssetId:{nativeNEP5Hash}");
+
+            byte decimals = await GetNativeNEP5Decimals(nativeNEP5Hash, chainHash);
+            Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+            await TransferNativeNEP5Async(chainHash, WIF, targetWIF, nativeNEP5Hash, new BigInteger(value));
+        }
+
+        public async Task TransferGlobalAsset(string assetId, string chainHash, string transferValue, string WIF, string targetWIF)
+        {
+            Console.WriteLine($"Global AssetId:{assetId}");
+
+            byte decimals = await GetGlobalAssetDecimals(assetId, chainHash);
+            Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+
+            await TransferGlobalAssetAsync(chainHash, WIF, targetWIF, assetId, new BigInteger(value));
         }
 
         public async Task TransferNEP5Async(string chainHash, string WIF, string targetWIF, string contractHash, BigInteger value)
@@ -92,7 +101,7 @@ namespace InvokeContractTest
             }
         }
 
-        public async Task TransferNativeNEP5(string chainHash, string WIF, string targetWIF, string assetId, BigInteger value)
+        public async Task TransferNativeNEP5Async(string chainHash, string WIF, string targetWIF, string assetId, BigInteger value)
         {
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
@@ -102,7 +111,28 @@ namespace InvokeContractTest
             {
                 ZoroHelper.PushRandomBytes(sb);
 
-                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", UInt256.Parse(assetId), scriptHash, targetscripthash, value);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", UInt160.Parse(assetId), scriptHash, targetscripthash, value);
+
+                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
+
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+
+                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                Console.WriteLine(resJO.ToString());
+            }
+        }
+
+        public async Task TransferGlobalAssetAsync(string chainHash, string WIF, string targetWIF, string assetId, BigInteger value)
+        {
+            KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
+            UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                ZoroHelper.PushRandomBytes(sb);
+
+                sb.EmitSysCall("Zoro.GlobalAsset.Transfer", UInt256.Parse(assetId), scriptHash, targetscripthash, value);
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
@@ -129,7 +159,19 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", UInt256.Parse(assetId));
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", UInt160.Parse(assetId));
+
+                var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+
+                return ParseDecimals(info);
+            }
+        }
+
+        async Task<byte> GetGlobalAssetDecimals(string assetId, string chainHash)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitSysCall("Zoro.GlobalAsset.Decimals", UInt256.Parse(assetId));
 
                 var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 

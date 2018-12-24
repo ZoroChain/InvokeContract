@@ -7,8 +7,6 @@ namespace InvokeContractTest
     {
         public string Name => "One Key Deployment 一键部署NEP5测试合约";
 
-        public string ID => "7";
-
         public int waitTime = 3;
 
         public async Task StartAsync()
