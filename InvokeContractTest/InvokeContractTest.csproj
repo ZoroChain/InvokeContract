@@ -8,7 +8,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Zoro\Zoro\Zoro.csproj" />
     <ProjectReference Include="..\llvm\llvm.csproj" />
-    <ProjectReference Include="..\signtool\signtool.csproj" />
     <ProjectReference Include="..\thinSDK\thinSDK.csproj" />
     <ProjectReference Include="..\thinSDK_neo\thinSDK_neo.csproj" />
   </ItemGroup>
