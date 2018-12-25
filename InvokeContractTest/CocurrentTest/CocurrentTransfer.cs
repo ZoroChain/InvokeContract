@@ -194,8 +194,11 @@ namespace InvokeContractTest
 
                 lastWaiting = waitingNum;
 
-                Interlocked.Add(ref pendingNum, cc);
-                Interlocked.Add(ref total, cc);
+                if (cc > 0)
+                {
+                    Interlocked.Add(ref pendingNum, cc);
+                    Interlocked.Add(ref total, cc);
+                }
 
                 DateTime dt = DateTime.Now;
 
