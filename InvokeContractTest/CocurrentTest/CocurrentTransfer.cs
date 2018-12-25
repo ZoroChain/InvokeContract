@@ -33,15 +33,19 @@ namespace InvokeContractTest
 
             if (transType == 0)
             {
-                await NEP5Transfer(chainHash); 
+                await NEP5Transfer(chainHash);
             }
             else if (transType == 1)
             {
                 await NativeNEP5Transfer(chainHash);
             }
-            else if(transType == 2)
+            else if (transType == 2)
             {
                 await BCPTransfer(chainHash);
+            }
+            else if (transType == 3)
+            {
+                await InvokeNEP5Test(chainHash);
             }
 
             Interlocked.Decrement(ref waitingNum);
@@ -83,6 +87,19 @@ namespace InvokeContractTest
             }
         }
 
+        protected async Task InvokeNEP5Test(string chainHash)
+        {
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitAppCall(nep5ContractHash, "name");
+                sb.EmitAppCall(nep5ContractHash, "totalSupply");
+                sb.EmitAppCall(nep5ContractHash, "symbol");
+                sb.EmitAppCall(nep5ContractHash, "decimals");
+
+                await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+            }
+        }
+
         public async Task StartAsync()
         {
             await Task.Run(() => Test());
@@ -90,7 +107,7 @@ namespace InvokeContractTest
 
         private void Test()
         {
-            Console.Write("选择交易类型，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - ContractTransaction：");
+            Console.Write("选择交易类型，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP, 3 - InvokeNEP5：");
             var param1 = Console.ReadLine();
             Console.Write("输入并发的数量：");
             var param2 = Console.ReadLine();
@@ -132,11 +149,6 @@ namespace InvokeContractTest
                 Console.WriteLine($"Value:{transferValue}");
             }
 
-            ThreadPool.GetMinThreads(out int minWorkerThreads, out int minCPortThreads);
-            ThreadPool.GetMaxThreads(out int maxWorkerThreads, out int maxCPortThreads);
-
-            ThreadPool.SetMinThreads(cocurrentNum, minCPortThreads);
-
             cancelTokenSource = new CancellationTokenSource();
 
             Task.Run(() => RunTask(chainHashList));
@@ -144,8 +156,6 @@ namespace InvokeContractTest
             Console.WriteLine("输入回车键停止:");
             var input = Console.ReadLine();
             cancelTokenSource.Cancel();
-
-            ThreadPool.SetMinThreads(minWorkerThreads, minCPortThreads);
         }
 
         public void RunTask(string[] chainHashList)

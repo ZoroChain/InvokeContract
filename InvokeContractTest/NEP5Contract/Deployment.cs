@@ -33,11 +33,13 @@ namespace InvokeContractTest
                 await createNep5.CreateNep5Async(chainHash, WIF, ContractPath);
                 Thread.Sleep(waitTime * 1000);
                 await deployNEP5.DeployNEP5Async(chainHash, WIF, ContractHash);
+                Thread.Sleep(waitTime * 1000);
                 await invokeNEP5.InvokeNep5Async(chainHash, WIF, ContractHash);
 
                 await createNativeNep5.CreateNativeNEP5Async(chainHash, WIF);
                 Thread.Sleep(waitTime * 1000);
                 await deployNativeNEP5.DeployNativeNEP5Async(chainHash, WIF, nativeNEP5Hash);
+                Thread.Sleep(waitTime * 1000);
                 await invokeNativeNEP5.InvokeNativeNep5Async(chainHash, nativeNEP5Hash);
             }
         }
