@@ -10,7 +10,7 @@ namespace InvokeContractTest
 {
     class CocurrentTransfer : IExample
     {
-        public string Name => "CocurrentNEP5Transfer2 开启并发交易";
+        public string Name => "CocurrentTransfer 开启并发交易";
 
         private UInt160 scriptHash;
         private KeyPair keypair;
