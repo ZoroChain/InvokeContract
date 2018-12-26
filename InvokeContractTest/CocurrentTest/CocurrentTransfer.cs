@@ -102,6 +102,8 @@ namespace InvokeContractTest
 
         public async Task StartAsync()
         {
+            System.Net.ServicePointManager.DefaultConnectionLimit = 512;
+
             await Task.Run(() => Test());
         }
 
@@ -213,14 +215,7 @@ namespace InvokeContractTest
 
                         Interlocked.Decrement(ref pendingNum);
 
-                        try
-                        {
-                            CallTransfer(chainHash);
-                        }
-                        catch(Exception e)
-                        {
-                            Console.WriteLine(e.Message);
-                        }
+                        CallTransfer(chainHash);
                     });
                 }
 

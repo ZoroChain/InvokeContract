@@ -325,9 +325,9 @@ namespace InvokeContractTest
                 result = await Helper.HttpPost(url, postdata);
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.Message);
+                //Console.WriteLine(e.Message);
             }
 
             return result;

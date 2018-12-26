@@ -100,16 +100,22 @@ namespace InvokeContractTest
 
         public static async Task<string> HttpGet(string url)
         {
-            WebClient wc = new WebClient();
-            return await wc.DownloadStringTaskAsync(url);
+            using (WebClient wc = new WebClient())
+            {
+                wc.Proxy = null;
+                return await wc.DownloadStringTaskAsync(url);
+            }
         }
 
         public static async Task<string> HttpPost(string url, byte[] data)
         {
-            WebClient wc = new WebClient();
-            wc.Headers["content-type"] = "text/plain;charset=UTF-8";
-            byte[] retdata = await wc.UploadDataTaskAsync(url, "POST", data);
-            return System.Text.Encoding.UTF8.GetString(retdata);
+            using (WebClient wc = new WebClient())
+            {
+                wc.Proxy = null;
+                wc.Headers["content-type"] = "text/plain;charset=UTF-8";
+                byte[] retdata = await wc.UploadDataTaskAsync(url, "POST", data);
+                return System.Text.Encoding.UTF8.GetString(retdata);
+            }
         }
 
         public static string GetJsonString(MyJson.JsonNode_Object item)
