@@ -50,6 +50,7 @@ namespace InvokeContractTest
             RegExample(new ChangeSeedList(), "18");
             RegExample(new ChangeValidators(), "19");
             RegExample(new LocalTest_HashSet(), "20");
+            RegExample(new LocalTest_LevelDB(), "21");
         }
 
         static void ShowMenu()
