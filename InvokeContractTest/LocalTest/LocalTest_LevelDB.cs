@@ -42,15 +42,19 @@ namespace InvokeContractTest
                     long mCount = 0;
                     long length = long.Parse(dbNumber + "0000");
                     int consoleNumber = int.Parse(num);
-                    WriteBatch batch = new WriteBatch();
+                    WriteBatch batch = new WriteBatch();                   
+                    keyCache = new List<string>(100000000);
                     string s = null;
                     while (mCount < length) {
                         s = Guid.NewGuid().ToString();
                         batch.Put(s, Message + mCount);
                         keyCache.Add(s);
                         if (System.Threading.Interlocked.Increment(ref mCount) % consoleNumber == 0) {
+                            var startTime = DateTime.Now;
                             db.Write(WriteOptions.Default, batch);
-                            batch.Clear();
+                            TimeSpan span = DateTime.Now - startTime;
+                            Console.WriteLine($"耗时:{new DateTime(span.Ticks).TimeOfDay:hh\\:mm\\:ss\\.fff}");
+                            batch.Clear();                           
                             Console.WriteLine("{0} has inserted. time use {1}ms.", mCount, sp.ElapsedMilliseconds);
                             sp.Reset();
                             sp.Start();
