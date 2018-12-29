@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Zoro.IO.Data.LevelDB;
+using System.Threading;
 
 namespace InvokeContractTest
 {
@@ -63,6 +64,7 @@ namespace InvokeContractTest
                             Console.WriteLine("{0} has inserted. time use {1}ms.", mCount, sp.ElapsedMilliseconds);
                             sp.Reset();
                             sp.Start();
+                            Thread.Sleep(300);
                         }
                     }
                     Console.WriteLine("{0} has inserted. time use {1}ms.", mCount, Totalsp.ElapsedMilliseconds);
