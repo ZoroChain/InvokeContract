@@ -32,7 +32,7 @@ namespace InvokeContractTest
                     var dbNumber = Console.ReadLine();
                     Console.WriteLine("输入每插入多少条数据，输出用时：");
                     var num = Console.ReadLine();
-                    var db = DB.Open(path + "//leveldb", new Options { CreateIfMissing = true, Compression = CompressionType.kSnappyCompression, WriteBufferSize = int.Parse(Math.Pow(2, 28) + "")});
+                    var db = DB.Open(path + "//leveldb", new Options { CreateIfMissing = true, Compression = CompressionType.kSnappyCompression, WriteBufferSize = int.Parse(Math.Pow(2, 24) + "")});
                     System.Diagnostics.Stopwatch Totalsp = new System.Diagnostics.Stopwatch();
                     Totalsp.Reset();
                     Totalsp.Start();
