@@ -50,7 +50,7 @@ namespace InvokeContractTest
                     while (mCount < length) {
                         s = Guid.NewGuid().ToString();
                         byte[] testkey = System.Text.Encoding.UTF8.GetBytes(s);
-                        byte[] testv = new byte[1024];
+                        byte[] testv = new byte[128];
                         r.NextBytes(testv);
                         batch.Put(testkey, testv);
                         //db.Put(WriteOptions.Default, testkey, testv);
