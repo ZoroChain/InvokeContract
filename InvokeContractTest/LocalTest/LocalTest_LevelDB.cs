@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Zoro.IO.Data.LevelDB;
+using System.Threading;
 
 namespace InvokeContractTest
 {
@@ -32,7 +33,7 @@ namespace InvokeContractTest
                     var dbNumber = Console.ReadLine();
                     Console.WriteLine("输入每插入多少条数据，输出用时：");
                     var num = Console.ReadLine();
-                    var db = DB.Open(path + "//leveldb", new Options { CreateIfMissing = true, Compression = CompressionType.kSnappyCompression, WriteBufferSize = int.Parse(Math.Pow(2, 28) + "")});
+                    var db = DB.Open(path + "//leveldb", new Options { CreateIfMissing = true, Compression = CompressionType.kSnappyCompression, WriteBufferSize = int.Parse(Math.Pow(2, 24) + "")});
                     System.Diagnostics.Stopwatch Totalsp = new System.Diagnostics.Stopwatch();
                     Totalsp.Reset();
                     Totalsp.Start();
@@ -49,7 +50,7 @@ namespace InvokeContractTest
                     while (mCount < length) {
                         s = Guid.NewGuid().ToString();
                         byte[] testkey = System.Text.Encoding.UTF8.GetBytes(s);
-                        byte[] testv = new byte[1024];
+                        byte[] testv = new byte[128];
                         r.NextBytes(testv);
                         batch.Put(testkey, testv);
                         //db.Put(WriteOptions.Default, testkey, testv);
@@ -63,6 +64,7 @@ namespace InvokeContractTest
                             Console.WriteLine("{0} has inserted. time use {1}ms.", mCount, sp.ElapsedMilliseconds);
                             sp.Reset();
                             sp.Start();
+                            Thread.Sleep(300);
                         }
                     }
                     Console.WriteLine("{0} has inserted. time use {1}ms.", mCount, Totalsp.ElapsedMilliseconds);
