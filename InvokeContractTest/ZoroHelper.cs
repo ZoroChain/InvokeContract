@@ -288,26 +288,6 @@ namespace InvokeContractTest
             return tx;
         }
 
-        public static ContractTransaction MakeContractTransaction(UInt256 assetId, KeyPair keypair, UInt160 targetScriptHash, Fixed8 value, Fixed8 gasPrice)
-        {
-            ContractTransaction tx = new ContractTransaction
-            {
-                AssetId = assetId,
-                From = GetPublicKeyHash(keypair.PublicKey),
-                To = targetScriptHash,
-                Value = value,
-                GasPrice = gasPrice
-            };
-
-            tx.Attributes = new TransactionAttribute[0];
-
-            byte[] data = GetHashData(tx);
-            byte[] signdata = Sign(data, keypair.PrivateKey, keypair.PublicKey);
-            AddWitness(tx, signdata, keypair.PublicKey);
-
-            return tx;
-        }
-
         public static async Task<string> SendRawTransaction(string rawdata, string chainHash)
         {
             string url;
@@ -346,15 +326,5 @@ namespace InvokeContractTest
 
             return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
         }
-
-        public static async Task<string> SendContractTransaction(UInt256 assetId, KeyPair keypair, UInt160 targetScriptHash, Fixed8 value, string chainHash, Fixed8 gasPrice)
-        {
-            ContractTransaction tx = MakeContractTransaction(assetId, keypair, targetScriptHash, value, gasPrice);
-
-            string rawdata = tx.ToArray().ToHexString();
-
-            return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
-        }
-
     }
 }
