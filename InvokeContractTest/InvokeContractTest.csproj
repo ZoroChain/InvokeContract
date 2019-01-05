@@ -13,6 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Config.testnet.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Config.mainnet.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

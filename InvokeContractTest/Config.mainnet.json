@@ -4,7 +4,7 @@
     ""
   ],
   "id_GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
-  "RpcUrl": "http://localhost:20333",
+  "RpcUrl": "http://115.159.53.39:20333",
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
@@ -12,10 +12,10 @@
   "transferValue": "10000",
   "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96",
   "BCPIssuer": [
-    "KxSVZ5F8Q4sGHYR9UCAufgxTNqzAhwadXeMRhTyKgPY6Yakzpb3T",
-    "KzGBycJqnc1ubPDziy5u1sYDg3ZgZNKwjqR2d2JWZ4Gmp5o3krFG",
-    "L23Yr3NGMPVCHVYoRu3BQaJdpvvmyPyyx7WZokMjmySMw4yZrcwa",
-    "L17KzE1aaBM7rauj2Z7qzWzavCpTiiHh51UPGbVnERQAwtBAvbpb"
+    "KytYNXjK9MuxfyBvNCEeBrmbseaomEcZ6hrivUQsNmgg1aAobmN1",
+    "L2Au5CrRKFJp54Bsx5eqnUe7CeLqonTbfsfPASbq9hPbgJdiSdXy",
+    "L1XAa6qcPZ2iSP4Moup9tviKZTRS3mTZqLKtAzykt88vibRj2LrG",
+    "Ky1JcXbQceQvStL2WyEqvdFzLY4VDgTejBTohFbrUuL1F7ieejF8"
   ],
   "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
   "TestContract": "0xbb361ed3c874f87e2993dfd617cfd6e34d33f6c2",
