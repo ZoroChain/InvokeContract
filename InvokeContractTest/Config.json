@@ -1,7 +1,7 @@
 {
-  "ChainHash": "33b4a700c4c5cd71d4402b2d095670282204f143",
+  "ChainHash": "",
   "ChainHashList": [
-    "33b4a700c4c5cd71d4402b2d095670282204f143"
+    ""
   ],
   "id_GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
   "RpcUrl": "http://127.0.0.1:20333",
