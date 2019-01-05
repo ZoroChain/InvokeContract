@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Globalization;
 using System.Threading.Tasks;
 using Zoro;
+using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -17,9 +18,9 @@ namespace InvokeContractTest
             string chainHash = Config.getValue("ChainHash");
             string WIF = Config.getValue("WIF");
             string targetWIF = Config.getValue("targetWIF");
-            string contractHash = Config.getValue("ContractHash");
-            string BCPHash = Config.getValue("BCPHash");
+            string contractHash = Config.getValue("ContractHash");            
             string nativeNEP5Hash = Config.getValue("NativeNEP5");
+            string BCPHash = Genesis.BcpContractAddress.ToString();
 
             Console.Write("Choose Transaction Type，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP：");
             int transType = int.Parse(Console.ReadLine());

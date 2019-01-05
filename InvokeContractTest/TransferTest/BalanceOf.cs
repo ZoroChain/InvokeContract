@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Zoro;
+using Zoro.Ledger;
 using Neo.VM;
 
 namespace InvokeContractTest
@@ -14,19 +15,18 @@ namespace InvokeContractTest
             string WIF = Config.getValue("WIF");
             string ContractHash = Config.getValue("ContractHash");
             string[] ChainHashList = Config.getStringArray("ChainHashList");
-            string BCPHash = Config.getValue("BCPHash");
             string nativeNEP5Hash = Config.getValue("NativeNEP5");
             UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
 
             Console.WriteLine($"Account: {WIF}");
-            await BalanceOfBCP(BCPHash, address, ChainHashList);
+            await BalanceOfBCP(address, ChainHashList);
             await BalanceOfNEP5Contract(ContractHash, address, ChainHashList);
             await BalanceOfNativeNEP5(nativeNEP5Hash, address, ChainHashList);
         }
 
-        async Task BalanceOfBCP(string BCPHash, UInt160 address, string[] chainHashList)
+        async Task BalanceOfBCP(UInt160 address, string[] chainHashList)
         {
-            UInt160 assetId = UInt160.Parse(BCPHash);
+            UInt160 assetId = Genesis.BcpContractAddress;
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {

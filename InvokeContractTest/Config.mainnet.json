@@ -11,12 +11,11 @@
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
   "transferValue": "10000",
   "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96",
-  "BCPHash": "0x2ec621671ca02ca3dc9d570f5ab6e07b8de2e61a",
   "BCPIssuer": [
-    "Ky1JcXbQceQvStL2WyEqvdFzLY4VDgTejBTohFbrUuL1F7ieejF8",
-    "KytYNXjK9MuxfyBvNCEeBrmbseaomEcZ6hrivUQsNmgg1aAobmN1",
-    "L2Au5CrRKFJp54Bsx5eqnUe7CeLqonTbfsfPASbq9hPbgJdiSdXy",
-    "L1XAa6qcPZ2iSP4Moup9tviKZTRS3mTZqLKtAzykt88vibRj2LrG"
+    "KxSVZ5F8Q4sGHYR9UCAufgxTNqzAhwadXeMRhTyKgPY6Yakzpb3T",
+    "KzGBycJqnc1ubPDziy5u1sYDg3ZgZNKwjqR2d2JWZ4Gmp5o3krFG",
+    "L23Yr3NGMPVCHVYoRu3BQaJdpvvmyPyyx7WZokMjmySMw4yZrcwa",
+    "L17KzE1aaBM7rauj2Z7qzWzavCpTiiHh51UPGbVnERQAwtBAvbpb"
   ],
   "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
   "TestContract": "0xbb361ed3c874f87e2993dfd617cfd6e34d33f6c2",

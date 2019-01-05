@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
 using Zoro;
+using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -134,8 +135,7 @@ namespace InvokeContractTest
             string nativeNEP5Hash = Config.getValue("NativeNEP5");
             nativeNEP5AssetId = UInt160.Parse(nativeNEP5Hash);
 
-            string BCPHash = Config.getValue("BCPHash");
-            BCPAssetId = UInt160.Parse(BCPHash);
+            BCPAssetId = Genesis.BcpContractAddress;
 
             if (transType == 0 || transType == 1 || transType == 2)
             {

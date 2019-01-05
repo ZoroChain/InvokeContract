@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Globalization;
 using Zoro;
+using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
 
@@ -20,9 +21,8 @@ namespace InvokeContractTest
 
             string chainHash = Config.getValue("ChainHash");
             string targetWIF = Config.getValue("WIF");
-            string BCPHash = Config.getValue("BCPHash");
             string[] wif_list = Config.getStringArray("BCPIssuer");
-            UInt160 assetId = UInt160.Parse(BCPHash);
+            UInt160 assetId = Genesis.BcpContractAddress;
 
             byte decimals = await GetDecimals(assetId, chainHash);
 
@@ -34,7 +34,7 @@ namespace InvokeContractTest
         async Task SendTransaction(UInt160 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
         {
             KeyPair[] keypairs = wif_list.Select(p => ZoroHelper.GetKeyPairFromWIF(p)).ToArray();
-            int m = keypairs.Length / 2 + 1;
+            int m = keypairs.Length - (keypairs.Length - 1) / 3;
 
             UInt160 scriptHash = ZoroHelper.GetMultiSigRedeemScriptHash(m, keypairs);
 
