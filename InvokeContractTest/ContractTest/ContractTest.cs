@@ -21,7 +21,7 @@ namespace InvokeContractTest
             string WIF = Config.getValue("WIF");
             string contractHash = Config.getValue("TestContract");
             UInt160 address = ZoroHelper.GetPublicKeyHashFromWIF(WIF);
-            var nativeBcp = UInt256.Parse(Config.getValue("NativeNEP5"));
+            var nativeBcp = UInt160.Parse(Config.getValue("NativeNEP5"));
             Console.WriteLine("Choose Transaction Type，0 - Contract Invoke NativeNEP5, 1 -  Contract Transfer NativeNEP5, 2 -  Contract Transfer_App NativeNEP5, 3 - TestContract Balance:");
             int transType = int.Parse(Console.ReadLine());
             if (transType == 0)
@@ -34,7 +34,7 @@ namespace InvokeContractTest
                 await BalanceOfNativeNEP5(nativeBcp, UInt160.Parse(contractHash), ChainHashList);
         }
 
-        public async Task ContractInvokeTestAsync(string contractHash, UInt160 address, UInt256 nativeBcp)
+        public async Task ContractInvokeTestAsync(string contractHash, UInt160 address, UInt160 nativeBcp)
         {
             string[] ChainHashList = Config.getStringArray("ChainHashList");
             using (ScriptBuilder sb = new ScriptBuilder())
@@ -59,7 +59,7 @@ namespace InvokeContractTest
             }
         }
 
-        public async Task SendRawTransactionTestAsync(string contractHash,string WIF, UInt256 nativeBcp, int transType)
+        public async Task SendRawTransactionTestAsync(string contractHash,string WIF, UInt160 nativeBcp, int transType)
         {
             Console.WriteLine("Transfer Amount:");
             string transferValue = Console.ReadLine();
@@ -71,7 +71,6 @@ namespace InvokeContractTest
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
                 if (transType == 1)
                     sb.EmitAppCall(ZoroHelper.Parse(contractHash), "transfer", nativeBcp, scriptHash, targetscripthash, (BigInteger)value);
                 if(transType==2)
@@ -85,7 +84,7 @@ namespace InvokeContractTest
             }
         }
 
-        async Task BalanceOfNativeNEP5(UInt256 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
+        async Task BalanceOfNativeNEP5(UInt160 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {

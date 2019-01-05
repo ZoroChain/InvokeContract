@@ -76,11 +76,11 @@ namespace InvokeContractTest
                 UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
                 UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromAddress(targetAddress);
 
-                await BalanceOfNativeNEP5(UInt256.Parse(nativeNEP5AssetId), targetscripthash, ChainHashList);
+                await BalanceOfNativeNEP5(UInt160.Parse(nativeNEP5AssetId), targetscripthash, ChainHashList);
             }
         }
 
-        async Task BalanceOfNativeNEP5(UInt256 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
+        async Task BalanceOfNativeNEP5(UInt160 nativeNEP5AssetId, UInt160 address, string[] chainHashList)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -100,9 +100,9 @@ namespace InvokeContractTest
         
         async Task<byte> GetNativeNEP5Decimals(string assetId, string chainHash)
         {
-            using (Neo.VM.ScriptBuilder sb = new Neo.VM.ScriptBuilder())
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", Zoro.UInt256.Parse(assetId));
+                sb.EmitSysCall("Zoro.NativeNEP5.Decimals", UInt160.Parse(assetId));
 
                 var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 
@@ -135,11 +135,9 @@ namespace InvokeContractTest
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             UInt160 scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
 
-            using (Neo.VM.ScriptBuilder sb = new Neo.VM.ScriptBuilder())
+            using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
-                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", UInt256.Parse(assetId), scriptHash, targetscripthash, value);
+                sb.EmitSysCall("Zoro.NativeNEP5.Transfer", UInt160.Parse(assetId), scriptHash, targetscripthash, value);
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 

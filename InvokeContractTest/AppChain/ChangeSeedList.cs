@@ -59,8 +59,6 @@ namespace InvokeContractTest
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
                 foreach (string seed in seedList)
                 {
                     sb.EmitPush(seed);

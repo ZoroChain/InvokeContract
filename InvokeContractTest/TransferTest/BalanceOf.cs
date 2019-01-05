@@ -26,12 +26,12 @@ namespace InvokeContractTest
 
         async Task BalanceOfBCP(string BCPHash, UInt160 address, string[] chainHashList)
         {
-            UInt256 assetId = UInt256.Parse(BCPHash);
+            UInt160 assetId = UInt160.Parse(BCPHash);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.GlobalAsset.BalanceOf", assetId, address);
-                sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", assetId);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "BalanceOf", assetId, address);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", assetId);
 
                 foreach (var chainHash in chainHashList)
                 {

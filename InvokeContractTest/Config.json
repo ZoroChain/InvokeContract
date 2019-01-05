@@ -1,17 +1,17 @@
 {
-  "ChainHash": "",
+  "ChainHash": "33b4a700c4c5cd71d4402b2d095670282204f143",
   "ChainHashList": [
-    ""
+    "33b4a700c4c5cd71d4402b2d095670282204f143"
   ],
   "id_GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
-  "RpcUrl": "http://localhost:20333",
+  "RpcUrl": "http://127.0.0.1:20333",
   "WIF": "L1PSC3LRShi51xHAX2KN9oCFqETrZQhnzhKVu5zbrzdDpxF1LQz3",
   "targetWIF": "L17Cq1FEbZJ8bc8Y8HcqVCgxsNpWY6LHDoau9DBD98m8vtGcVpuQ",
   "ContractPath": "BcpContract.avm",
   "ContractHash": "c4108917282bff79b156d4d01315df811790c0e8",
   "transferValue": "10000",
   "NativeNEP5": "0x69f5041dc8a0b30c606122e5accf14f5f85ade96",
-  "BCPHash": "0xf8dc3ba76bbcb80f0cb0d4d1781d2c5b0419c5b068fbae17d9f006bfb61a56ed",
+  "BCPHash": "0x2ec621671ca02ca3dc9d570f5ab6e07b8de2e61a",
   "BCPIssuer": [
     "L1S9WsnRRuXAQqNtGsJcQak7htpWALWM7355zaiUegTV8UBwQXSJ",
     "KwTr9bT5G8AGnFBpp81WiF5ij4vvb61cuURYM7VhAkfqSLcXC3Kf",

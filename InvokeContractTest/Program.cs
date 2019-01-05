@@ -39,7 +39,6 @@ namespace InvokeContractTest
             RegExample(new ConcurrentCrossChain(), "6");
             RegExample(new CreateContract(), "7");
             RegExample(new ContractTest(), "8");
-            RegExample(new InvokeBCP(), "9");
             RegExample(new CreateNEP5(), "11");
             RegExample(new DeployNEP5(), "12");
             RegExample(new InvokeNEP5(), "13");

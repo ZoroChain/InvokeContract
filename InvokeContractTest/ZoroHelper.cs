@@ -173,19 +173,6 @@ namespace InvokeContractTest
             return outd;
         }
 
-        public static void PushRandomBytes(ScriptBuilder sb, int count = 32)
-        {
-            MyJson.JsonNode_Array array = new MyJson.JsonNode_Array();
-            byte[] randomBytes = new byte[count];
-            using (System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
-            BigInteger randomNum = new BigInteger(randomBytes);
-            sb.EmitPush(randomNum);
-            sb.EmitPush(Neo.VM.OpCode.DROP);
-        }
-
         public static async Task<string> InvokeScript(byte[] script, string chainHash)
         {
             string scriptPublish = script.ToHexString();
@@ -245,10 +232,11 @@ namespace InvokeContractTest
         {
             InvocationTransaction tx = new InvocationTransaction
             {
+                Nonce = Transaction.GetNonce(),
                 Script = script,
                 GasPrice = gasPrice,
                 GasLimit = gasLimit.Ceiling(),
-                ScriptHash = GetPublicKeyHash(keypair.PublicKey)
+                Account = GetPublicKeyHash(keypair.PublicKey)
             };
 
             tx.Attributes = new TransactionAttribute[0];
@@ -264,10 +252,11 @@ namespace InvokeContractTest
         {
             InvocationTransaction tx = new InvocationTransaction
             {
+                Nonce = Transaction.GetNonce(),
                 Script = script,
                 GasPrice = gasPrice,
                 GasLimit = gasLimit.Ceiling(),
-                ScriptHash = GetMultiSigRedeemScriptHash(m, keypairs)
+                Account = GetMultiSigRedeemScriptHash(m, keypairs)
             };
 
             int count = keypairs.Length;

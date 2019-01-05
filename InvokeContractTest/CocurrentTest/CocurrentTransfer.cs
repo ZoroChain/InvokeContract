@@ -17,7 +17,7 @@ namespace InvokeContractTest
         private UInt160 targetAddress;
         private UInt160 nep5ContractHash;
         private UInt160 nativeNEP5AssetId;
-        private UInt256 BCPAssetId;
+        private UInt160 BCPAssetId;
         private string transferValue;
         private int transType = 0;
         private int cocurrentNum = 0;
@@ -55,8 +55,6 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", nativeNEP5AssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
                 await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NativeNEP5Transfer"], Config.GasPrice);
@@ -67,8 +65,6 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
                 sb.EmitAppCall(nep5ContractHash, "transfer", scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
                 await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NEP5Transfer"], Config.GasPrice);
@@ -79,9 +75,7 @@ namespace InvokeContractTest
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
-                sb.EmitSysCall("Zoro.GlobalAsset.Transfer", BCPAssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", BCPAssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
                 await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["BCPTransfer"], Config.GasPrice);
             }
@@ -141,7 +135,7 @@ namespace InvokeContractTest
             nativeNEP5AssetId = UInt160.Parse(nativeNEP5Hash);
 
             string BCPHash = Config.getValue("BCPHash");
-            BCPAssetId = UInt256.Parse(BCPHash);
+            BCPAssetId = UInt160.Parse(BCPHash);
 
             if (transType == 0 || transType == 1 || transType == 2)
             {

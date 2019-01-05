@@ -22,7 +22,7 @@ namespace InvokeContractTest
             string targetWIF = Config.getValue("WIF");
             string BCPHash = Config.getValue("BCPHash");
             string[] wif_list = Config.getStringArray("BCPIssuer");
-            UInt256 assetId = UInt256.Parse(BCPHash);
+            UInt160 assetId = UInt160.Parse(BCPHash);
 
             byte decimals = await GetDecimals(assetId, chainHash);
 
@@ -31,7 +31,7 @@ namespace InvokeContractTest
             await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
         }
 
-        async Task SendTransaction(UInt256 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
+        async Task SendTransaction(UInt160 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
         {
             KeyPair[] keypairs = wif_list.Select(p => ZoroHelper.GetKeyPairFromWIF(p)).ToArray();
             int m = keypairs.Length / 2 + 1;
@@ -42,9 +42,7 @@ namespace InvokeContractTest
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                ZoroHelper.PushRandomBytes(sb);
-
-                sb.EmitSysCall("Zoro.GlobalAsset.Transfer", assetId, scriptHash, targetscripthash, value);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", assetId, scriptHash, targetscripthash, value);
 
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
@@ -55,11 +53,11 @@ namespace InvokeContractTest
             }
         }
 
-        async Task<byte> GetDecimals(UInt256 assetId, string chainHash)
+        async Task<byte> GetDecimals(UInt160 assetId, string chainHash)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
-                sb.EmitSysCall("Zoro.GlobalAsset.GetPrecision", assetId);
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "Decimals", assetId);
 
                 var info = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
 
