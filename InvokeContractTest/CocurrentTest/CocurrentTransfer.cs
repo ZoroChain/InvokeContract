@@ -1,8 +1,12 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Numerics;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
 using Zoro;
+using Zoro.IO;
 using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
@@ -20,31 +24,35 @@ namespace InvokeContractTest
         private UInt160 nativeNEP5AssetId;
         private UInt160 BCPAssetId;
         private string transferValue;
-        private int transType = 0;
-        private int cocurrentNum = 0;
-        private int transNum = 0;
+        private int transactionType = 0;
+        private int concurrencyCount = 0;
+        private int transferCount = 0;
         private int waitingNum = 0;
         private int step = 0;
+        private int error = 0;
+        private bool randomTargetAddress = false;
+        private bool randomGasPrice = false;
+        private UInt160[] targetAddressList;
 
         private CancellationTokenSource cancelTokenSource;
 
-        protected async void CallTransfer(string chainHash)
+        protected async void CallTransfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             Interlocked.Increment(ref waitingNum);
 
-            if (transType == 0)
+            if (transactionType == 0)
             {
-                await NEP5Transfer(chainHash);
+                await NEP5Transfer(chainHash, targetAddress, gasPrice);
             }
-            else if (transType == 1)
+            else if (transactionType == 1)
             {
-                await NativeNEP5Transfer(chainHash);
+                await NativeNEP5Transfer(chainHash, targetAddress, gasPrice);
             }
-            else if (transType == 2)
+            else if (transactionType == 2)
             {
-                await BCPTransfer(chainHash);
+                await BCPTransfer(chainHash, targetAddress, gasPrice);
             }
-            else if (transType == 3)
+            else if (transactionType == 3)
             {
                 await InvokeNEP5Test(chainHash);
             }
@@ -52,33 +60,39 @@ namespace InvokeContractTest
             Interlocked.Decrement(ref waitingNum);
         }
 
-        protected async Task NativeNEP5Transfer(string chainHash)
+        protected async Task NativeNEP5Transfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", nativeNEP5AssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NativeNEP5Transfer"], Config.GasPrice);
+                string result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NativeNEP5Transfer"], gasPrice);
+
+                ParseResult(result);
             }
         }
 
-        protected async Task NEP5Transfer(string chainHash)
+        protected async Task NEP5Transfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitAppCall(nep5ContractHash, "transfer", scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NEP5Transfer"], Config.GasPrice);
+                string result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["NEP5Transfer"], gasPrice);
+
+                ParseResult(result);
             }
         }
 
-        protected async Task BCPTransfer(string chainHash)
+        protected async Task BCPTransfer(string chainHash, UInt160 targetAddress, Fixed8 gasPrice)
         {
             using (ScriptBuilder sb = new ScriptBuilder())
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", BCPAssetId, scriptHash, targetAddress, BigInteger.Parse(transferValue));
 
-                await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["BCPTransfer"], Config.GasPrice);
+                string result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasLimit["BCPTransfer"], gasPrice);
+
+                ParseResult(result);
             }
         }
 
@@ -104,22 +118,28 @@ namespace InvokeContractTest
 
         private void Test()
         {
-            Console.Write("选择交易类型，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP, 3 - InvokeNEP5：");
+            Console.Write("选择交易类型，0 - NEP5 SmartContract, 1 - NativeNEP5, 2 - BCP, 3 - InvokeNEP5:");
             var param1 = Console.ReadLine();
-            Console.Write("输入并发的数量：");
+            Console.Write("输入并发的数量:");
             var param2 = Console.ReadLine();
-            Console.Write("发送几次交易：");
+            Console.Write("发送几次交易:");
             var param3 = Console.ReadLine();
-            Console.Write("转账金额：");
+            Console.Write("转账金额:");
             var param4 = Console.ReadLine();
-            Console.Write("是否自动调整并发数量：");
+            Console.Write("目标账户随机, 0 - no, 1 - yes:");
             var param5 = Console.ReadLine();
+            Console.Write("GasPrice随机, 0 - no, 1 - yes:");
+            var param6 = Console.ReadLine();
+            Console.Write("是否自动调整并发数量, 0 - no, 1 - yes:");
+            var param7 = Console.ReadLine();
 
-            transType = int.Parse(param1);
-            transNum = int.Parse(param3);
-            cocurrentNum = int.Parse(param2);
+            transactionType = int.Parse(param1);
+            transferCount = int.Parse(param3);
+            concurrencyCount = int.Parse(param2);
             transferValue = param4;
-            step = int.Parse(param5) == 1 ? Math.Max(cocurrentNum / 5, 10) : 0;
+            randomTargetAddress = int.Parse(param5) == 1;
+            randomGasPrice = int.Parse(param6) == 1;
+            step = int.Parse(param7) == 1 ? Math.Max(concurrencyCount / 5, 10) : 0;
 
             string[] chainHashList = Config.getStringArray("ChainHashList");
             string WIF = Config.getValue("WIF");
@@ -137,11 +157,16 @@ namespace InvokeContractTest
 
             BCPAssetId = Genesis.BcpContractAddress;
 
-            if (transType == 0 || transType == 1 || transType == 2)
+            if (randomTargetAddress)
+            {
+                InitializeRandomTargetAddressList(transferCount);
+            }
+
+            if (transactionType == 0 || transactionType == 1 || transactionType == 2)
             {
                 Console.WriteLine($"From:{WIF}");
                 Console.WriteLine($"To:{targetWIF}");
-                Console.WriteLine($"Count:{transNum}");
+                Console.WriteLine($"Count:{transferCount}");
                 Console.WriteLine($"Value:{transferValue}");
             }
 
@@ -158,17 +183,19 @@ namespace InvokeContractTest
         {
             int chainNum = chainHashList.Length;
 
+            Random rnd = new Random();
             TimeSpan oneSecond = TimeSpan.FromSeconds(1);
 
             int idx = 0;
             int total = 0;
 
-            int cc = step > 0 ? Math.Min(cocurrentNum, step) : cocurrentNum;
+            int cc = step > 0 ? Math.Min(concurrencyCount, step) : concurrencyCount;
 
             int lastWaiting = 0;
             int pendingNum = 0;
 
             waitingNum = 0;
+            error = 0;
 
             while (true)
             {
@@ -178,15 +205,18 @@ namespace InvokeContractTest
                     break;
                 }
 
-                if (transNum > 0)
+                if (transferCount > 0)
                 {
-                    if (total >= transNum && pendingNum == 0 && waitingNum == 0)
+                    if (total >= transferCount && pendingNum == 0 && waitingNum == 0)
+                    {
+                        Console.WriteLine($"round:{++idx}, total:{total}, tx:0, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
                         break;
+                    }
 
-                    cc = Math.Min(transNum - total, cc);
+                    cc = Math.Min(transferCount - total, cc);
                 }
 
-                Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}");
+                Console.WriteLine($"round:{++idx}, total:{total}, tx:{cc}, pending:{pendingNum}, waiting:{waitingNum}, error:{error}");
 
                 lastWaiting = waitingNum;
 
@@ -209,7 +239,12 @@ namespace InvokeContractTest
 
                         Interlocked.Decrement(ref pendingNum);
 
-                        CallTransfer(chainHash);
+                        Fixed8 price = Config.GasPrice;
+
+                        if (randomGasPrice)
+                            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out price);
+
+                        CallTransfer(chainHash, randomTargetAddress ? GetRandomTargetAddress(rnd) : targetAddress, price);
                     });
                 }
 
@@ -222,16 +257,111 @@ namespace InvokeContractTest
 
                 if (step > 0)
                 {
-                    if (pendingNum > cocurrentNum)
+                    if (pendingNum > concurrencyCount)
                     {
                         cc = Math.Max(cc - step, 0);
                     }
-                    else if (pendingNum < cocurrentNum)
+                    else if (pendingNum < concurrencyCount)
                     {
-                        cc = Math.Min(cc + step, cocurrentNum);
+                        cc = Math.Min(cc + step, concurrencyCount);
                     }
                 }
             }
+        }
+
+        protected void InitializeRandomTargetAddressList(int count)
+        {
+            int maximum = 50000;
+            count = Math.Min(maximum, count);
+
+            string filename = "targetaddress.dat";
+            if (!LoadTargetAddress(filename, count))
+            {
+                GenerateRandomTargetAddressList(filename, count);
+            }
+        }
+
+        protected bool LoadTargetAddress(string filename, int count)
+        {
+            if (!File.Exists(filename))
+                return false;
+
+            using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using (BinaryReader reader = new BinaryReader(fs, Encoding.ASCII, true))
+                {
+                    int num = reader.ReadInt32();
+                    if (num < count)
+                        return false;
+
+                    targetAddressList = new UInt160[num];
+                    for (int i = 0; i < num; i++)
+                    {
+                        targetAddressList[i] = reader.ReadSerializable<UInt160>();
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        protected void GenerateRandomTargetAddressList(string filename, int count)
+        {
+            Console.WriteLine($"Generating random target address list:{count}");
+
+            DateTime time = DateTime.UtcNow;
+
+            targetAddressList = new UInt160[count];
+            for (int i = 0; i < count; i++)
+            {
+                targetAddressList[i] = GenerateRandomTargetAddress();
+                if (i % 100 == 0)
+                {
+                    Console.Write(".");
+                }
+            }
+
+            TimeSpan interval = DateTime.UtcNow - time;
+
+            Console.WriteLine($"Target address list completed, time:{interval:hh\\:mm\\:ss\\.ff}");
+
+            using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                using (BinaryWriter writer = new BinaryWriter(fs, Encoding.ASCII, true))
+                {
+                    writer.Write(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        writer.Write(targetAddressList[i]);
+                    }
+                }
+            }
+        }
+
+        protected UInt160 GenerateRandomTargetAddress()
+        {
+            byte[] privateKey = new byte[32];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(privateKey);
+            }
+
+            KeyPair key = new KeyPair(privateKey);
+            return key.PublicKeyHash;
+        }
+
+        protected UInt160 GetRandomTargetAddress(Random rnd)
+        {
+            int index = rnd.Next(0, targetAddressList.Length);
+            return targetAddressList[index];
+        }
+
+        private void ParseResult(string result)
+        {
+            if (!ZoroHelper.IsRpcResultOK(result))
+            {
+                Interlocked.Increment(ref error);
+            }            
         }
     }
 }
