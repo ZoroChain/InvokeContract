@@ -50,6 +50,7 @@ namespace InvokeContractTest
             RegExample(new ChangeValidators(), "19");
             RegExample(new LocalTest_HashSet(), "20");
             RegExample(new LocalTest_LevelDB(), "21");
+            RegExample(new LocalTest_ConcurrentDictionary(), "22");
         }
 
         static void ShowMenu()

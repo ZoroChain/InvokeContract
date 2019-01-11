@@ -8,7 +8,7 @@ namespace InvokeContractTest
 {
     class LocalTest_HashSet : IExample
     {
-        public string Name => "LocalTest HashSet 本地测试";
+        public string Name => "HashSet 性能测试";
 
         public async Task StartAsync()
         {
