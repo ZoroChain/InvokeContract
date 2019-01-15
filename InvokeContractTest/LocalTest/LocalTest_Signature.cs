@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Zoro;
 using Zoro.Ledger;
 using Zoro.Wallets;
+using Zoro.SmartContract;
 using Zoro.Persistence;
 using Zoro.Persistence.LevelDB;
 using Zoro.Network.P2P.Payloads;
@@ -13,11 +14,9 @@ using Neo.VM;
 
 namespace InvokeContractTest
 {
-    class LocalTest_MemPool : IExample
+    class LocalTest_Signature : IExample
     {
-        public string Name => "测试MemPool的性能";
-
-        private MemoryPool mempool = new MemoryPool(50_000);
+        public string Name => "测试Signature的性能";
 
         private KeyPair keypair;
         private UInt160 scriptHash;
@@ -37,37 +36,10 @@ namespace InvokeContractTest
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
             targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
 
-            while (true)
-            {
-                Console.WriteLine("请选择的测试类型:");
-                Console.WriteLine("1.AddVerified");
-                Console.WriteLine("2.MoveToUnverified");
-                Console.WriteLine("3.Reverify");
-                Console.WriteLine("4.退出");
+            string path = Config.getValue("LevelDB");
+            Store appStore = new LevelDBStore(path);
+            Snapshot snapshot = appStore.GetSnapshot();
 
-                int cmd = int.Parse(Console.ReadLine());
-                if (cmd == 1)
-                {
-                    AddVerifed();
-                }
-                else if (cmd == 2)
-                {
-                    MoveToUnverified();
-                }
-                else if (cmd == 3)
-                {
-                    Reverify();
-                }
-                else if (cmd == 4)
-                {
-                    mempool.Clear();
-                    break;
-                }
-            }
-        }
-
-        private void AddVerifed()
-        {
             Console.WriteLine("请输入数量:");
             var param = Console.ReadLine();
 
@@ -76,9 +48,7 @@ namespace InvokeContractTest
                 return;
 
             Random rnd = new Random();
-
             DateTime dt = DateTime.Now;
-
             List<Transaction> txns = new List<Transaction>();
 
             for (int i = 0; i < count; i++)
@@ -86,61 +56,24 @@ namespace InvokeContractTest
                 txns.Add(MakeTestTransaction(rnd));
             }
 
-            Console.Write("maketxn, count:{0}, ", count);
+            Console.Write("maketxn, ");
             PrintTimeCost(dt);
 
-            dt = DateTime.Now;
-
-            int succ = 0;
-            for (int i = 0;i <count;i ++)
+            foreach (var tx in txns)
             {
-                if (mempool.TryAddVerified(txns[i]))
-                    succ++;
+                tx.Verify(snapshot);
             }
 
-            Console.Write("succ:{0}, total:{1}, ", succ, mempool.Count);
+            Console.Write("verify, ");
             PrintTimeCost(dt);
-        }
 
-        private void MoveToUnverified()
-        {
-            DateTime dt = DateTime.Now;
-
-            mempool.ResetToUnverified();
-
-            Console.WriteLine("reset:{0}, ", mempool.Count);
-            PrintTimeCost(dt);
-        }
-
-        private void Reverify()
-        {
-            Console.WriteLine("请输入每次搬移的数量:");
-            var param = Console.ReadLine();
-
-            int step = int.Parse(param);
-            if (step <= 0)
-                return;
-
-            DateTime dt = DateTime.Now;
-
-            int count = mempool.UnverifiedCount;
-            while (mempool.HasUnverified)
-            {
-                Transaction[] unverfied = mempool.TakeUnverifiedTransactions(step);
-
-                foreach (var tx in unverfied)
-                {
-                    mempool.SetVerifyState(tx.Hash, true);
-                }
-            }
-
-            TimeSpan span = DateTime.Now - dt;
-            Console.WriteLine($"耗时:{span.TotalMilliseconds}ms, 平均耗时:{span.TotalMilliseconds/(count/step)}ms");
+            snapshot.Dispose();
+            appStore.Dispose();
         }
 
         private Transaction MakeTestTransaction(Random rnd)
         {
-            Fixed8.TryParse((rnd.Next(1, 10000) * 0.0001).ToString(), out Fixed8 price);
+            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out Fixed8 price);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {

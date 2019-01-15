@@ -19,5 +19,6 @@
   ],
   "ZoroBank": "0xcfb0f9ec4b1840565daeffa92ae60b0c6ff60688",
   "TestContract": "0xbb361ed3c874f87e2993dfd617cfd6e34d33f6c2",
-  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf"
+  "CrossAccount": "L4ooZWvkj6QM9AjPREmF2SZZFYgEFAxWPzYJY6jdr4XJNx62Smbf",
+  "LevelDB": "../../../../../Zoro-Chain/Chain_0378734A"
 }
