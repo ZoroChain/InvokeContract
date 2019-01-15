@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Numerics;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Zoro;
 using Zoro.Ledger;
 using Zoro.Wallets;
-using Zoro.Persistence;
-using Zoro.Persistence.LevelDB;
 using Zoro.Network.P2P.Payloads;
 using Neo.VM;
 
@@ -86,7 +83,7 @@ namespace InvokeContractTest
                 txns.Add(MakeTestTransaction(rnd));
             }
 
-            Console.Write("maketxn, count:{0}, ", count);
+            Console.Write("MakeTxn, count:{0}, ", count);
             PrintTimeCost(dt);
 
             dt = DateTime.Now;
@@ -108,7 +105,7 @@ namespace InvokeContractTest
 
             mempool.ResetToUnverified();
 
-            Console.WriteLine("reset:{0}, ", mempool.Count);
+            Console.Write("ResetToUnverified:{0}, ", mempool.Count);
             PrintTimeCost(dt);
         }
 
@@ -156,11 +153,10 @@ namespace InvokeContractTest
                 };
 
                 tx.Attributes = new TransactionAttribute[0];
-
                 tx.Witnesses = new Witness[0];
-                byte[] data = ZoroHelper.GetHashData(tx);
-                byte[] signdata = ZoroHelper.Sign(data, keypair.PrivateKey, keypair.PublicKey);
-                ZoroHelper.AddWitness(tx, signdata, keypair.PublicKey);
+                //byte[] data = ZoroHelper.GetHashData(tx);
+                //byte[] signdata = ZoroHelper.Sign(data, keypair.PrivateKey, keypair.PublicKey);
+                //ZoroHelper.AddWitness(tx, signdata, keypair.PublicKey);
 
                 return tx;
             }
