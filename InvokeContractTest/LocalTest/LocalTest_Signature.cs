@@ -59,6 +59,7 @@ namespace InvokeContractTest
             Console.Write("maketxn, ");
             PrintTimeCost(dt);
 
+            dt = DateTime.Now;
             foreach (var tx in txns)
             {
                 tx.Verify(snapshot);
@@ -67,13 +68,22 @@ namespace InvokeContractTest
             Console.Write("verify, ");
             PrintTimeCost(dt);
 
+            dt = DateTime.Now;
+            foreach (var tx in txns)
+            {
+                tx.Reverify(snapshot);
+            }
+
+            Console.Write("reverify, ");
+            PrintTimeCost(dt);
+
             snapshot.Dispose();
             appStore.Dispose();
         }
 
         private Transaction MakeTestTransaction(Random rnd)
         {
-            Fixed8.TryParse((rnd.Next(1, 1000) * 0.0001).ToString(), out Fixed8 price);
+            Fixed8.TryParse((rnd.Next(1, 10000) * 0.0001).ToString(), out Fixed8 price);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
