@@ -50,6 +50,8 @@ namespace InvokeContractTest
                 sb.EmitPush(script);
                 sb.EmitSysCall("Zoro.Contract.Create");
 
+                Console.WriteLine($"ScriptHash:{script.ToScriptHash()}");
+
                 decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
 
                 var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);

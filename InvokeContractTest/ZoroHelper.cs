@@ -322,7 +322,7 @@ namespace InvokeContractTest
             {
                 MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
 
-                if (json_result_array.TryGetValue("result", out MyJson.IJsonNode json_result))
+                if (json_result_array != null && json_result_array.TryGetValue("result", out MyJson.IJsonNode json_result))
                 {
                     return json_result.AsBool();
                 }

@@ -12,7 +12,7 @@ namespace InvokeContractTest
 {
     public class ContractTest : IExample
     {
-        public string Name => "CreateTest 测试合约接口";
+        public string Name => "ContractTest 测试合约接口";
 
         public async Task StartAsync()
         {
