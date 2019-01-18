@@ -5,11 +5,17 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Zoro\Zoro\Zoro.csproj" />
-    <ProjectReference Include="..\llvm\llvm.csproj" />
-    <ProjectReference Include="..\thinSDK\thinSDK.csproj" />
-    <ProjectReference Include="..\thinSDK_neo\thinSDK_neo.csproj" />
   </ItemGroup>
 
   <ItemGroup>
