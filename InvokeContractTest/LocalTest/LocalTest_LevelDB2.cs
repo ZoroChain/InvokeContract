@@ -57,7 +57,7 @@ namespace InvokeContractTest
             Console.WriteLine("开始测试:");
             Console.WriteLine();
 
-            string fullpath = string.Format("{0}_{1}mb", Path.GetFullPath(path), (writeBufferSize / MB).ToString());
+            string fullpath = string.Format(Path.GetFullPath(path));
 
             using (var db = DB.Open(fullpath, new Options { CreateIfMissing = true, WriteBufferSize = writeBufferSize }))
             {
