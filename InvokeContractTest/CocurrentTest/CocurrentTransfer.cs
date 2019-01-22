@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Zoro;
 using Zoro.IO;
+using Zoro.IO.Json;
 using Zoro.Ledger;
 using Zoro.Wallets;
 using Neo.VM;
@@ -104,7 +105,9 @@ namespace InvokeContractTest
                 sb.EmitAppCall(nep5ContractHash, "symbol");
                 sb.EmitAppCall(nep5ContractHash, "decimals");
 
-                await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+                string result = await ZoroHelper.InvokeScript(sb.ToArray(), chainHash);
+
+                ParseInvokeResult(result);
             }
         }
 
@@ -342,10 +345,52 @@ namespace InvokeContractTest
 
         private void ParseResult(string result)
         {
-            if (!ZoroHelper.IsRpcResultOK(result))
+            if (result.Length == 0 || !IsSendRawTxnResultOK(result))
             {
                 Interlocked.Increment(ref error);
-            }            
+            }
+        }
+
+        private void ParseInvokeResult(string result)
+        {
+            if (result.Length == 0 || !IsInvokeResultOK(result))
+            {
+                Interlocked.Increment(ref error);
+            }
+        }
+
+        public bool IsSendRawTxnResultOK(string response)
+        {
+            try
+            {
+                JObject json_response = JObject.Parse(response);
+                JObject json_result = json_response["result"];
+                return json_result.AsBoolean();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            return false;
+        }
+
+        public bool IsInvokeResultOK(string response)
+        {
+            try
+            {
+                JObject json_response = JObject.Parse(response);
+                JObject json_result = json_response["result"];
+                JObject json_state = json_result["state"];
+                string state = json_state.AsString();
+                return state.Length > 0;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            return false;
         }
     }
 }

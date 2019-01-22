@@ -315,24 +315,5 @@ namespace InvokeContractTest
 
             return await SendRawTransaction(tx.ToArray().ToHexString(), chainHash);
         }
-
-        public static bool IsRpcResultOK(string result)
-        {
-            try
-            {
-                MyJson.JsonNode_Object json_result_array = MyJson.Parse(result) as MyJson.JsonNode_Object;
-
-                if (json_result_array != null && json_result_array.TryGetValue("result", out MyJson.IJsonNode json_result))
-                {
-                    return json_result.AsBool();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            return false;
-        }
     }
 }
