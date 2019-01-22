@@ -53,6 +53,8 @@ namespace InvokeContractTest
             RegExample(new LocalTest_ConcurrentDictionary(), "22");
             RegExample(new LocalTest_MemPool(), "23");
             RegExample(new LocalTest_Signature(), "24");
+            RegExample(new LocalTest_CompressTxn(), "25");
+            
         }
 
         static void ShowMenu()
