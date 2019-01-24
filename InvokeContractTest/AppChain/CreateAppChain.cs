@@ -32,6 +32,8 @@ namespace InvokeContractTest
                 Console.Write("seed " + (i + 1) + ": ");
                 seedList[i] = Console.ReadLine();
             }
+            Console.Write("IsPrivate: ");
+            string isprivate = Console.ReadLine();
 
             KeyPair keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
 
@@ -48,6 +50,7 @@ namespace InvokeContractTest
                 }
                 sb.EmitPush(seedList.Length);
                 sb.EmitPush(DateTime.UtcNow.ToTimestamp());
+                sb.EmitPush(isprivate == "1" ? 1 : 0);
                 sb.EmitPush(keypair.PublicKey.EncodePoint(true));
                 sb.EmitPush(name);
 
