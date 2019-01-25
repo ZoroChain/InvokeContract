@@ -137,7 +137,7 @@ namespace InvokeContractTest
 
         private Transaction MakeTestTransaction(Random rnd)
         {
-            Fixed8.TryParse((rnd.Next(1, 10000) * 0.0001).ToString(), out Fixed8 price);
+            Fixed8.TryParse((rnd.Next(1, 10000) * 0.00001).ToString(), out Fixed8 price);
 
             using (ScriptBuilder sb = new ScriptBuilder())
             {
@@ -148,7 +148,7 @@ namespace InvokeContractTest
                     Nonce = Transaction.GetNonce(),
                     Script = sb.ToArray(),
                     GasPrice = price,
-                    GasLimit = Fixed8.FromDecimal((decimal)5),
+                    GasLimit = Fixed8.FromDecimal(1000),
                     Account = ZoroHelper.GetPublicKeyHash(keypair.PublicKey)
                 };
 

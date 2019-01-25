@@ -8,9 +8,9 @@ namespace InvokeContractTest
     {
         public static MyJson.IJsonNode configJson = null;
 
-        public static Fixed8 GasPrice = Fixed8.One;
+        public static Fixed8 GasPrice = Fixed8.FromDecimal(0.00001m);
 
-        public static decimal GasNEP5Transfer = (decimal)4.5;
+        public static decimal GasNEP5Transfer = 4216;
 
         public static Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
 
@@ -18,7 +18,7 @@ namespace InvokeContractTest
         {
             configJson = MyJson.Parse(File.ReadAllText(configPath));
 
-            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal((decimal)4.5);
+            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4216);
             GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
             GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1);
         }
