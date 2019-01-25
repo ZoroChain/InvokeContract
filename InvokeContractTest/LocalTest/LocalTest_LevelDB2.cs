@@ -13,7 +13,7 @@ namespace InvokeContractTest
     {
         public string Name => "测试LevelDB的性能";
 
-        private string path = "../../../../../leveldb_test";
+        private string path = "leveldb_test";
 
         private RandomNumberGenerator rng = RandomNumberGenerator.Create();
         private Random rand = new Random();
@@ -77,32 +77,49 @@ namespace InvokeContractTest
         private void Iteration(DB db, int runTimes, int insertCount, int queryCount, int iterator, ulong rc)
         {
             TimeSpan[] insertTimeCosts = new TimeSpan[runTimes];
-            TimeSpan[] queryTimeCosts = new TimeSpan[runTimes];
-            TimeSpan[] randomQueryTimeCosts = new TimeSpan[runTimes];
+            TimeSpan[] queryCachedSnapshotTimeCosts = new TimeSpan[runTimes];
+            TimeSpan[] queryRandomSnapshotTimeCosts = new TimeSpan[runTimes];
+            TimeSpan[] queryCachedDirectTimeCosts = new TimeSpan[runTimes];
+            TimeSpan[] queryRandomDirectTimeCosts = new TimeSpan[runTimes];
+
+            List<byte[]> randomKeys = new List<byte[]>();
+            List<byte[]> randomValues = new List<byte[]>();
+            List<byte[]> randomQueryKeys = new List<byte[]>();
+
+            int keyCount = runTimes * insertCount;
+            GenerateRandomKeyValues(randomKeys, randomQueryKeys, randomValues, keyCount);            
 
             for (int i = 0; i < runTimes; i++)
             {
                 List<byte[]> cachedKeys = new List<byte[]>();
 
-                DateTime dt1 = DateTime.Now;
-                TestInsert(db, insertCount, cachedKeys);
+                insertTimeCosts[i] = TestInsert(db, insertCount, i, randomKeys, randomValues);
 
-                DateTime dt2 = DateTime.Now;
-                insertTimeCosts[i] = dt2 - dt1;
-                TestCachedQuery(db, queryCount, cachedKeys); 
+                queryCachedSnapshotTimeCosts[i] = TestQuerySnapshot(db, queryCount, i, randomKeys, keyCount);
+                queryRandomSnapshotTimeCosts[i] = TestQuerySnapshot(db, queryCount, i, randomQueryKeys, keyCount);
 
-                DateTime dt3 = DateTime.Now;
-                queryTimeCosts[i] = dt3 - dt2;
-                TestRandomQuery(db, queryCount);
-                randomQueryTimeCosts[i] = DateTime.Now - dt3;
+                queryCachedDirectTimeCosts[i] = TestQueryDirect(db, queryCount, i, randomKeys, keyCount);
+                queryRandomDirectTimeCosts[i] = TestQueryDirect(db, queryCount, i, randomQueryKeys, keyCount);
             }
 
             Console.WriteLine("Iteration {0}:", iterator);
             PrintRecordCount(rc);
-            PrintTimeCost("Insert time cost,      ", insertTimeCosts);
-            PrintTimeCost("Query time cost,       ", queryTimeCosts);
-            PrintTimeCost("Random query time cost,", randomQueryTimeCosts);
+            PrintTimeCost("Insert time cost,               ", insertTimeCosts);
+            PrintTimeCost("Query cached snapshot time cost,", queryCachedSnapshotTimeCosts);
+            PrintTimeCost("Random query snapshot time cost,", queryRandomSnapshotTimeCosts);
+            PrintTimeCost("Query cached direct time cost,  ", queryCachedDirectTimeCosts);
+            PrintTimeCost("Random query direct time cost,  ", queryRandomDirectTimeCosts);
             Console.WriteLine();
+        }
+
+        private void GenerateRandomKeyValues(List<byte[]> randomKeys, List<byte[]> randomQueryKeys, List<byte[]> randomValues, int count)
+        {
+            for (int i = 0;i <count;i ++)
+            {
+                randomKeys.Add(GetRandomKey());
+                randomQueryKeys.Add(GetRandomKey());
+                randomValues.Add(GetRandomValue());
+            }
         }
 
         private ulong ReadRecordCount(DB db)
@@ -127,63 +144,65 @@ namespace InvokeContractTest
             db.Write(WriteOptions.Default, batch);
         }
 
-        private void TestInsert(DB db, int insertCount, List<byte[]> cachedKeys)
+        private TimeSpan TestInsert(DB db, int insertCount, int runIndex, List<byte[]> keys, List<byte[]> values)
         {
+            DateTime dt = DateTime.Now;
+
             WriteBatch batch = new WriteBatch();
 
             for (int i = 0; i < insertCount; i++)
             {
-                byte[] key = GetTestKey();
-                byte[] value = GetTestValue();
-
-                cachedKeys.Add(key);
-                batch.Put(key, value);
+                int index = runIndex * insertCount + i;
+                batch.Put(keys[index], values[index]);
             }
 
             db.Write(WriteOptions.Default, batch);
+
+            return DateTime.Now - dt;
         }
 
-        private void TestRandomQuery(DB db, int queryCount)
+        private TimeSpan TestQuerySnapshot(DB db, int queryCount, int runIndex, List<byte[]> keys, int keyCount)
         {
-            using (Snapshot snapshot = db.GetSnapshot())
-            {
-                ReadOptions options = new ReadOptions { FillCache = false, Snapshot = snapshot };
+            DateTime dt = DateTime.Now;
 
-                int cached = 0;
-                for (int i = 0; i < queryCount; i++)
-                {
-                    if (db.TryGet(options, GetTestKey(), out Slice slice))
-                        cached++;
-                }
-            }
-        }
-
-        private int TestCachedQuery(DB db, int queryCount, List<byte[]> cachedKeys)
-        {
             using (Snapshot snapshot = db.GetSnapshot())
             {
                 ReadOptions options = new ReadOptions { FillCache = false, Snapshot = snapshot };
 
                 int hitted = 0;
-                int keyCount = cachedKeys.Count;
                 for (int i = 0; i < queryCount; i++)
                 {
-                    if (db.TryGet(options, cachedKeys[i % keyCount], out Slice slice))
+                    int index = runIndex * queryCount + i;
+                    if (db.TryGet(options, keys[index % keyCount], out Slice slice))
                         hitted++;
                 }
-
-                return hitted;
             }
+
+            return DateTime.Now - dt;
         }
 
-        private byte[] GetTestKey()
+        private TimeSpan TestQueryDirect(DB db, int queryCount, int runIndex, List<byte[]> keys, int keyCount)
+        {
+            DateTime dt = DateTime.Now;
+
+            int hitted = 0;
+            for (int i = 0; i < queryCount; i++)
+            {
+                int index = runIndex * queryCount + i;
+                if (db.TryGet(ReadOptions.Default, keys[index % keyCount], out Slice slice))
+                    hitted++;
+            }
+            return DateTime.Now - dt;
+        }
+
+        private byte[] GetRandomKey()
         {
             byte[] key = new byte[32];
             rng.GetBytes(key);
             return key;
         }
 
-        private byte[] GetTestValue()
+        private byte[] GetRandomValue()
         {
             int size = rand.Next(200, 300);
             byte[] value = new byte[size];
