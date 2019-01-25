@@ -19,8 +19,8 @@ namespace InvokeContractTest
             configJson = MyJson.Parse(File.ReadAllText(configPath));
 
             GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4216);
-            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1);
-            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1);
+            GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1000);
+            GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1000);
         }
 
         public static string getValue(string name) {
