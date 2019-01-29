@@ -10,7 +10,7 @@ namespace InvokeContractTest
 
         public static Fixed8 GasPrice = Fixed8.FromDecimal(0.00001m);
 
-        public static decimal GasNEP5Transfer = 4216;
+        public static decimal GasNEP5Transfer = 4500;
 
         public static Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
 
@@ -18,7 +18,7 @@ namespace InvokeContractTest
         {
             configJson = MyJson.Parse(File.ReadAllText(configPath));
 
-            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4216);
+            GasLimit["NEP5Transfer"] = Fixed8.FromDecimal(4500);
             GasLimit["NativeNEP5Transfer"] = Fixed8.FromDecimal(1000);
             GasLimit["BCPTransfer"] = Fixed8.FromDecimal(1000);
         }
