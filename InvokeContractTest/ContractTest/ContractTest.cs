@@ -75,9 +75,8 @@ namespace InvokeContractTest
                     sb.EmitAppCall(ZoroHelper.Parse(contractHash), "transfer", nativeBcp, scriptHash, targetscripthash, (BigInteger)value);
                 if(transType==2)
                     sb.EmitAppCall(ZoroHelper.Parse(contractHash), "transfer_app", nativeBcp, scriptHash, (BigInteger)value);
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
 
-                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas + 1), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

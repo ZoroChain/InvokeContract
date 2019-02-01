@@ -27,9 +27,7 @@ namespace InvokeContractTest
             {
                 sb.EmitAppCall(ZoroHelper.Parse(ContractHash), "deploy", "1");
 
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
-
-                string result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                string result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Config.GasPrice);
                 Console.WriteLine(result);
             }
         }

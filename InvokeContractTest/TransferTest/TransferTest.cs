@@ -75,11 +75,7 @@ namespace InvokeContractTest
             {
                 sb.EmitAppCall(UInt160.Parse(contractHash), "transfer", scriptHash, targetscripthash, value);
 
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
-
-                gas = Math.Max(Config.GasNEP5Transfer, gas);
-
-                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());
@@ -96,9 +92,7 @@ namespace InvokeContractTest
             {
                 sb.EmitSysCall("Zoro.NativeNEP5.Call", "Transfer", UInt160.Parse(assetId), scriptHash, targetscripthash, value);
 
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), chainHash);
-
-                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, chainHash, Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());
