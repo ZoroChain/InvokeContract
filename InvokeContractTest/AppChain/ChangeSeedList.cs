@@ -66,9 +66,7 @@ namespace InvokeContractTest
                 sb.EmitPush(seedList.Length);
                 sb.EmitSysCall("Zoro.AppChain.ChangeSeedList");
 
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), appchainHash);
-
-                result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, appchainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, appchainHash, Config.GasPrice);
                 Console.WriteLine(result);
             }
         }

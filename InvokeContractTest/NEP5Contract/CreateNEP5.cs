@@ -50,9 +50,7 @@ namespace InvokeContractTest
                 sb.EmitPush(script);
                 sb.EmitSysCall("Zoro.Contract.Create");
 
-                decimal gas = await ZoroHelper.GetScriptGasConsumed(sb.ToArray(), ChainHash);
-
-                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Fixed8.FromDecimal(gas), Config.GasPrice);
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), keypair, ChainHash, Config.GasPrice);
 
                 MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
                 Console.WriteLine(resJO.ToString());

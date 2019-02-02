@@ -10,8 +10,6 @@ namespace InvokeContractTest
 
         public static Fixed8 GasPrice = Fixed8.FromDecimal(0.00001m);
 
-        public static decimal GasNEP5Transfer = 4500;
-
         public static Dictionary<string, Fixed8> GasLimit = new Dictionary<string, Fixed8>();
 
         public static void init(string configPath)
