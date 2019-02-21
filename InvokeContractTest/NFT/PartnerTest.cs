@@ -85,8 +85,7 @@ namespace InvokeContractTest
             keypair = ZoroHelper.GetKeyPairFromWIF(WIF);
             scriptHash = ZoroHelper.GetPublicKeyHash(keypair.PublicKey);
             targetAddress = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
-            nftHash = UInt160.Parse("0x60a4a905ab822f93a48a5cf8d0180afd7537c472");
-
+            nftHash = UInt160.Parse(Config.getValue("nftHash"));
             BCPAssetId = Genesis.BcpContractAddress;
 
             if (randomTargetAddress)
@@ -317,5 +316,6 @@ namespace InvokeContractTest
 
             return false;
         }
+
     }
 }

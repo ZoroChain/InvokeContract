@@ -12,23 +12,55 @@ namespace InvokeContractTest
 {
     class RetrieveBCP : IExample
     {
-        public string Name => "RetrieveBCP 向发行账户申请BCP货币";
+        public string Name => "RetrieveToken 向发行账户申请代币";
         
         public async Task StartAsync()
         {
-            Console.WriteLine("转账金额");
-            string transferValue = Console.ReadLine();
-
             string chainHash = Config.getValue("ChainHash");
             string targetWIF = Config.getValue("WIF");
             string[] wif_list = Config.getStringArray("BCPIssuer");
-            UInt160 assetId = Genesis.BcpContractAddress;
+            Console.Write("Choose Token Type，0 - BCP, 1 - BCT");
+            int transType = int.Parse(Console.ReadLine());
 
-            byte decimals = await GetDecimals(assetId, chainHash);
+            Console.WriteLine("转账金额");
+            string transferValue = Console.ReadLine();
 
-            Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+            if (transType == 0)
+            {
+                UInt160 assetId = Genesis.BcpContractAddress;
 
-            await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
+                byte decimals = await GetDecimals(assetId, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+                await SendTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
+            }
+            if (transType == 1)
+            {
+                UInt160 assetId = Genesis.BctContractAddress;
+
+                byte decimals = await GetDecimals(assetId, chainHash);
+                Decimal value = Decimal.Parse(transferValue, NumberStyles.Float) * new Decimal(Math.Pow(10, decimals));
+                await SendMintTokenTransaction(assetId, wif_list, targetWIF, new BigInteger(value), chainHash);
+            }
+        }
+
+        async Task SendMintTokenTransaction(UInt160 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
+        {
+            KeyPair[] keypairs = wif_list.Select(p => ZoroHelper.GetKeyPairFromWIF(p)).ToArray();
+            int m = keypairs.Length - (keypairs.Length - 1) / 3;
+
+            UInt160 scriptHash = ZoroHelper.GetMultiSigRedeemScriptHash(m, keypairs);
+
+            UInt160 targetscripthash = ZoroHelper.GetPublicKeyHashFromWIF(targetWIF);
+
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitSysCall("Zoro.NativeNEP5.Call", "MintToken", assetId, targetscripthash, value);
+
+                var result = await ZoroHelper.SendInvocationTransaction(sb.ToArray(), m, keypairs, chainHash, Config.GasPrice);
+
+                MyJson.JsonNode_Object resJO = (MyJson.JsonNode_Object)MyJson.Parse(result);
+                Console.WriteLine(resJO.ToString());
+            }
         }
 
         async Task SendTransaction(UInt160 assetId, string[] wif_list, string targetWIF, BigInteger value, string chainHash)
