@@ -19,7 +19,7 @@ namespace InvokeContractTest
             string chainHash = Config.getValue("ChainHash");
             string targetWIF = Config.getValue("WIF");
             string[] wif_list = Config.getStringArray("BCPIssuer");
-            Console.Write("Choose Token Type，0 - BCP, 1 - BCT");
+            Console.Write("Choose Token Type，0 - BCP, 1 - BCT:");
             int transType = int.Parse(Console.ReadLine());
 
             Console.WriteLine("转账金额");
